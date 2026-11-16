@@ -3,7 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="icon" href="data:,">
+<meta name="theme-color" content="#0a2b29">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Daily Reminder">
 <style>[hidden]{display:none!important}</style>
 <title>Daily Reminder</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -1838,6 +1845,13 @@ setInterval(()=>refreshWeather(false), 20*60*1000);
 setInterval(()=>{ const [,,d]=ymdIn(P.tz,new Date()); if(d!==build.day){ build.day=d; build(); renderVerse(); renderMascot(); if(document.getElementById("view-azkar").classList.contains("active"))renderAzkar(); } applyTheme(); if(new Date().getSeconds()%20===0) renderSky(); tick(false); },1000);
 build.day=ymdIn(P.tz,new Date())[2];
 })();
+</script>
+
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+}
 </script>
 
 </body>
