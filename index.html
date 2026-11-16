@@ -1797,6 +1797,7 @@ function computeBatchEnd(start){ const info=surahInfoFor(start); if(info && info
 
 let batchStart=0, batchEnd=0, batchItems=[]; const batchRead=new Set();
 let recPrev=store.get("rec_prev",null); // position before the last "mark read", for undo
+let recPartial=store.get("rec_partial",null); // {start, read:[...]} — per-āyah marks not yet completed, survives refresh
 async function renderRecite(force){
   const done=Math.min(recPos,QURAN_TOTAL), pct=done/QURAN_TOTAL*100;
   if($("recBar"))$("recBar").style.width=pct.toFixed(2)+"%";
@@ -1804,7 +1805,8 @@ async function renderRecite(force){
   if($("recUndo"))$("recUndo").hidden = recPrev==null;
   const list=$("recList"), mark=$("recMark"); if(!list)return;
   if(recPos>=QURAN_TOTAL){ if($("recSet"))$("recSet").textContent="Alḥamdulillāh!"; list.innerHTML=`<div class="rec-done">🎉 Alḥamdulillāh — you have completed the Qur'ān!</div>`; if(mark)mark.textContent="Start again"; return; }
-  if(force || batchStart!==recPos+1){ batchStart=recPos+1; batchEnd=computeBatchEnd(batchStart); batchItems=[]; batchRead.clear(); }
+  if(force || batchStart!==recPos+1){ batchStart=recPos+1; batchEnd=computeBatchEnd(batchStart); batchItems=[]; batchRead.clear();
+    if(recPartial && recPartial.start===batchStart && Array.isArray(recPartial.read)) recPartial.read.forEach(g=>{ if(g>=batchStart&&g<=batchEnd)batchRead.add(g); }); }
   const n=batchEnd-batchStart+1, info=surahInfoFor(batchStart);
   if($("recSet"))$("recSet").textContent = (info&&info.len<8) ? `Full sūrah today — ${n} āyah (goal ${recPerDay}/day)` : `Today: ${n} āyah (change in Settings)`;
   if(!batchItems.length){
@@ -1824,21 +1826,22 @@ function paintBatch(){
   list.querySelectorAll(".rec-read").forEach(b=>b.onclick=()=>markAyahRead(+b.dataset.g));
   const mark=$("recMark"); if(mark) mark.textContent = batchRead.size>=batchItems.length && batchItems.length ? "✓ Finish today's reading" : "✓ Mark all as read";
 }
+function saverecPartial(){ recPartial = batchRead.size ? {start:batchStart, read:[...batchRead]} : null; store.set("rec_partial", recPartial); }
 function markAyahRead(g){
   if(batchRead.has(g)) batchRead.delete(g); else batchRead.add(g); // tap again to un-mark
   if(batchItems.length && batchItems.every((o,i)=>batchRead.has(batchStart+i))) completeBatch();
-  else paintBatch();
+  else { saverecPartial(); paintBatch(); }
 }
 function completeBatch(){
   recPrev=recPos; store.set("rec_prev",recPrev);                 // remember where we were, for undo
   recPos=Math.max(recPos,batchEnd); store.set("rec_pos",recPos); store.set("rec_last",dayKeyNow());
-  batchStart=0; batchItems=[]; batchRead.clear();
+  batchStart=0; batchItems=[]; batchRead.clear(); recPartial=null; store.set("rec_partial",null);
   celebrate("Māshā'Allāh",false); renderRecite(true);
 }
 function recUndo(){
   if(recPrev==null)return;
   recPos=recPrev; recPrev=null; store.set("rec_pos",recPos); store.set("rec_prev",null);
-  batchStart=0; batchItems=[]; batchRead.clear();
+  batchStart=0; batchItems=[]; batchRead.clear(); recPartial=null; store.set("rec_partial",null);
   toast("Reverted"); renderRecite(true);
 }
 function recMarkRead(){
