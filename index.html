@@ -3,14 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0a2b29">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Daily Reminder">
+<link rel="icon" href="data:,">
 <style>[hidden]{display:none!important}</style>
 <title>Daily Reminder</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -372,7 +365,7 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
 .rec-read{justify-self:start;margin-top:2px;padding:5px 13px;font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--on);border-radius:999px;cursor:pointer}
 .rec-ayah.read .rec-read{background:var(--band);color:var(--band-ink);border-color:var(--band)}
 /* Dhivehi (Thaana, right-to-left) — official Maldivian translation */
-.dv{font-family:"MV Faseyha","Faruma","MV Boli","Noto Sans Thaana","MV Typewriter",sans-serif;direction:rtl;text-align:right;line-height:2.05;font-size:17px}
+.dv{font-family:"Faruma","MV Faseyha","MV Boli","Noto Sans Thaana","MV Typewriter",sans-serif;direction:rtl;text-align:right;line-height:2.05;font-size:17px}
 .rec-ayah .dv{color:var(--ink);opacity:.95}
 .verse-card .dv{opacity:.95}
 .rec-loading,.rec-err,.rec-done{font-size:14px;color:var(--muted);padding:10px 2px;text-align:center}
@@ -1845,13 +1838,6 @@ setInterval(()=>refreshWeather(false), 20*60*1000);
 setInterval(()=>{ const [,,d]=ymdIn(P.tz,new Date()); if(d!==build.day){ build.day=d; build(); renderVerse(); renderMascot(); if(document.getElementById("view-azkar").classList.contains("active"))renderAzkar(); } applyTheme(); if(new Date().getSeconds()%20===0) renderSky(); tick(false); },1000);
 build.day=ymdIn(P.tz,new Date())[2];
 })();
-</script>
-
-
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(()=>{}); });
-}
 </script>
 
 </body>
