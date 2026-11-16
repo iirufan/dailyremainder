@@ -7,7 +7,7 @@
 <style>[hidden]{display:none!important}</style>
 <title>Daily Reminder</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Scheherazade+New:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Scheherazade+New:wght@400;700&family=Noto+Sans+Thaana:wght@400;600&display=swap">
 <style>
 /* Layout: three tabbed views over a fixed bottom nav. Prayer is a timetable on a dusk band;
    Azkar are reading cards with per-item counters; Tasbih is a tap dial with a progress ring. */
@@ -1379,8 +1379,9 @@ async function loadVerseDhivehi(){
   if(!m){ el.hidden=true; return; }
   const key=m[1]+":"+m[2];
   if(key in verseDvCache){ const t=verseDvCache[key]; if(t){ el.textContent=t; el.hidden=false; } else el.hidden=true; return; }
-  try{ const r=await fetch(`https://api.alquran.cloud/v1/ayah/${key}/editions/div.divehi`,{cache:"force-cache"});
-    const j=await r.json(); const t=j&&j.data&&j.data[0]&&j.data[0].text; verseDvCache[key]=t||null;
+  const dvEd=await getDvEdition(); if(!dvEd){ el.hidden=true; verseDvCache[key]=null; return; }
+  try{ const r=await fetch(`https://api.alquran.cloud/v1/ayah/${key}/editions/${dvEd}`,{cache:"force-cache"});
+    const j=await r.json(); let t=j&&j.data&&j.data[0]&&j.data[0].text; if(!isThaana(t))t=null; verseDvCache[key]=t||null;
     if(t && $("verseDv")){ $("verseDv").textContent=t; $("verseDv").hidden=false; } else if($("verseDv")) $("verseDv").hidden=true;
   }catch(e){ verseDvCache[key]=null; }
 }
@@ -1720,17 +1721,39 @@ const QURAN_TOTAL=6236;
 let recPos=store.get("rec_pos",0);
 let recPerDay=store.get("rec_perday",3);
 const ayahCache={};
+// Find the official Divehi (Maldivian) Qur'ān edition and VERIFY it returns Thaana script
+// (not Arabic). The API silently serves Arabic for an unknown edition id, so we probe + check.
+const isThaana=s=>/[ހ-޿]/.test(s||"");
+let _dvEd; // undefined=unknown, null=none found, string=verified identifier
+async function getDvEdition(){
+  if(_dvEd!==undefined)return _dvEd;
+  const cands=[];
+  for(const lang of ["dv","div"]){
+    try{ const r=await fetch(`https://api.alquran.cloud/v1/edition/language/${lang}`,{cache:"force-cache"});
+      const j=await r.json(); (j&&j.data||[]).forEach(e=>{ if(e&&e.identifier&&!cands.includes(e.identifier))cands.push(e.identifier); });
+    }catch(_){}
+  }
+  for(const id of ["dv.divehi","div.divehi"]) if(!cands.includes(id))cands.push(id);
+  for(const id of cands){
+    try{ const r=await fetch(`https://api.alquran.cloud/v1/ayah/1/editions/${id}`,{cache:"force-cache"});
+      if(!r.ok)continue; const j=await r.json(); const t=j&&j.data&&j.data[0]&&j.data[0].text;
+      if(isThaana(t)){ _dvEd=id; return _dvEd; }
+    }catch(_){}
+  }
+  _dvEd=null; return _dvEd;
+}
 async function getAyah(n){
   if(ayahCache[n])return ayahCache[n];
+  const dvEd=await getDvEdition();
   const base=`https://api.alquran.cloud/v1/ayah/${n}/editions/`;
   const [rMain,rDv]=await Promise.all([
     fetch(base+"quran-uthmani,en.sahih",{cache:"force-cache"}),
-    fetch(base+"div.divehi",{cache:"force-cache"}).catch(()=>null)
+    dvEd?fetch(base+dvEd,{cache:"force-cache"}).catch(()=>null):Promise.resolve(null)
   ]);
   if(!rMain.ok)throw new Error("net");
   const j=await rMain.json(); const a=j.data&&j.data[0], e=j.data&&j.data[1];
   if(!a||!e)throw new Error("data");
-  let dv=null; try{ if(rDv&&rDv.ok){ const jd=await rDv.json(); dv=jd.data&&jd.data[0]&&jd.data[0].text; } }catch(_){}
+  let dv=null; try{ if(rDv&&rDv.ok){ const jd=await rDv.json(); const t=jd.data&&jd.data[0]&&jd.data[0].text; dv=isThaana(t)?t:null; } }catch(_){}
   const o={ar:a.text,en:e.text,dv,s:a.surah.englishName,sn:a.surah.number,ni:a.numberInSurah};
   ayahCache[n]=o; return o;
 }
