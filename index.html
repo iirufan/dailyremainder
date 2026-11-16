@@ -361,6 +361,9 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
 .rec-ref{font-size:12px;font-weight:600;color:var(--brass)}
 .rec-ayah .ar{font-family:var(--f-ar);font-size:25px;line-height:1.95;text-align:right;color:var(--ink)}
 .rec-ayah .mn{font-size:14px;color:var(--ink);opacity:.92}
+.rec-ayah.read{opacity:.62}
+.rec-read{justify-self:start;margin-top:2px;padding:5px 13px;font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--on);border-radius:999px;cursor:pointer}
+.rec-ayah.read .rec-read{background:var(--band);color:var(--band-ink);border-color:var(--band)}
 /* Dhivehi (Thaana, right-to-left) — official Maldivian translation */
 .dv{font-family:"MV Faseyha","Faruma","MV Boli","Noto Sans Thaana","MV Typewriter",sans-serif;direction:rtl;text-align:right;line-height:2.05;font-size:17px}
 .rec-ayah .dv{color:var(--ink);opacity:.95}
@@ -1719,7 +1722,7 @@ function renderDuas(){
 /* =================== RECITATION — complete the Qur'ān =================== */
 const QURAN_TOTAL=6236;
 let recPos=store.get("rec_pos",0);
-let recPerDay=store.get("rec_perday",3);
+let recPerDay=store.get("rec_perday",6);
 const ayahCache={};
 // Find the official Divehi (Maldivian) Qur'ān edition and VERIFY it returns Thaana script
 // (not Arabic). The API silently serves Arabic for an unknown edition id, so we probe + check.
@@ -1757,31 +1760,52 @@ async function getAyah(n){
   const o={ar:a.text,en:e.text,dv,s:a.surah.englishName,sn:a.surah.number,ni:a.numberInSurah};
   ayahCache[n]=o; return o;
 }
-async function renderRecite(){
-  if($("recSet"))$("recSet").textContent=`Your goal: ${recPerDay} āyah per day`;
+// Āyah count of each of the 114 sūrahs (Ḥafṣ) — lets us size a day's reading by sūrah.
+const SURAH_AYAHS=[7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+function surahInfoFor(g){ let cum=0; for(let i=0;i<114;i++){ if(g<=cum+SURAH_AYAHS[i]) return {surah:i+1,numberInSurah:g-cum,len:SURAH_AYAHS[i],endGlobal:cum+SURAH_AYAHS[i]}; cum+=SURAH_AYAHS[i]; } return null; }
+function computeBatchEnd(start){ const info=surahInfoFor(start); if(info && info.len<8) return Math.min(QURAN_TOTAL, info.endGlobal); return Math.min(QURAN_TOTAL, start+recPerDay-1); }
+
+let batchStart=0, batchEnd=0, batchItems=[]; const batchRead=new Set();
+async function renderRecite(force){
   const done=Math.min(recPos,QURAN_TOTAL), pct=done/QURAN_TOTAL*100;
   if($("recBar"))$("recBar").style.width=pct.toFixed(2)+"%";
   if($("recProg"))$("recProg").textContent=`${done} of ${QURAN_TOTAL} āyāt · ${pct.toFixed(1)}%`;
   const list=$("recList"), mark=$("recMark"); if(!list)return;
-  if(recPos>=QURAN_TOTAL){ list.innerHTML=`<div class="rec-done">🎉 Alḥamdulillāh — you have completed the Qur'ān!</div>`; if(mark)mark.textContent="Start again"; return; }
-  if(mark)mark.textContent="✓ Mark as read";
-  const start=recPos+1, end=Math.min(QURAN_TOTAL,recPos+recPerDay), nums=[];
-  for(let n=start;n<=end;n++)nums.push(n);
-  const token=start+"-"+end; list.dataset.token=token;
-  list.innerHTML=`<div class="rec-loading">Loading today's āyāt…</div>`;
-  try{
-    const items=await Promise.all(nums.map(getAyah));
-    if(list.dataset.token!==token)return;
-    list.innerHTML=items.map(o=>`<div class="rec-ayah"><div class="rec-ref">${o.s} · ${o.sn}:${o.ni}</div><div class="ar" lang="ar">${o.ar}</div>${o.dv?`<div class="dv" lang="dv" dir="rtl">${o.dv}</div>`:""}<div class="mn">${o.en}</div></div>`).join("");
-  }catch(e){
-    if(list.dataset.token!==token)return;
-    list.innerHTML=`<div class="rec-err">Couldn't load today's āyāt — connect to the internet and reopen this tab.</div>`;
+  if(recPos>=QURAN_TOTAL){ if($("recSet"))$("recSet").textContent="Alḥamdulillāh!"; list.innerHTML=`<div class="rec-done">🎉 Alḥamdulillāh — you have completed the Qur'ān!</div>`; if(mark)mark.textContent="Start again"; return; }
+  if(force || batchStart!==recPos+1){ batchStart=recPos+1; batchEnd=computeBatchEnd(batchStart); batchItems=[]; batchRead.clear(); }
+  const n=batchEnd-batchStart+1, info=surahInfoFor(batchStart);
+  if($("recSet"))$("recSet").textContent = (info&&info.len<8) ? `Full sūrah today — ${n} āyah (goal ${recPerDay}/day)` : `Today: ${n} āyah (change in Settings)`;
+  if(!batchItems.length){
+    const nums=[]; for(let g=batchStart;g<=batchEnd;g++)nums.push(g);
+    const token=batchStart+"-"+batchEnd; list.dataset.token=token;
+    list.innerHTML=`<div class="rec-loading">Loading today's āyāt…</div>`;
+    try{ const items=await Promise.all(nums.map(getAyah)); if(list.dataset.token!==token)return; batchItems=items; }
+    catch(e){ if(list.dataset.token!==token)return; list.innerHTML=`<div class="rec-err">Couldn't load today's āyāt — connect to the internet and reopen this tab.</div>`; if(mark)mark.textContent="Retry"; return; }
   }
+  paintBatch();
+}
+function paintBatch(){
+  const list=$("recList"); if(!list)return;
+  list.innerHTML=batchItems.map((o,i)=>{ const g=batchStart+i, read=batchRead.has(g);
+    return `<div class="rec-ayah${read?' read':''}"><div class="rec-ref">${o.s} · ${o.sn}:${o.ni}</div><div class="ar" lang="ar">${o.ar}</div>${o.dv?`<div class="dv" lang="dv" dir="rtl">${o.dv}</div>`:""}<div class="mn">${o.en}</div><button class="rec-read" data-g="${g}">${read?"✓ Read":"Mark read"}</button></div>`;
+  }).join("");
+  list.querySelectorAll(".rec-read").forEach(b=>b.onclick=()=>markAyahRead(+b.dataset.g));
+  const mark=$("recMark"); if(mark) mark.textContent = batchRead.size>=batchItems.length && batchItems.length ? "✓ Finish today's reading" : "✓ Mark all as read";
+}
+function markAyahRead(g){
+  batchRead.add(g);
+  if(batchItems.length && batchItems.every((o,i)=>batchRead.has(batchStart+i))) completeBatch();
+  else paintBatch();
+}
+function completeBatch(){
+  recPos=Math.max(recPos,batchEnd); store.set("rec_pos",recPos); store.set("rec_last",dayKeyNow());
+  batchStart=0; batchItems=[]; batchRead.clear();
+  celebrate("Māshā'Allāh",false); renderRecite(true);
 }
 function recMarkRead(){
-  if(recPos>=QURAN_TOTAL){ recPos=0; store.set("rec_pos",0); renderRecite(); return; }
-  recPos=Math.min(QURAN_TOTAL,recPos+recPerDay); store.set("rec_pos",recPos); store.set("rec_last",dayKeyNow());
-  celebrate("Māshā'Allāh",false); renderRecite();
+  if(recPos>=QURAN_TOTAL){ recPos=0; store.set("rec_pos",0); batchStart=0; batchItems=[]; batchRead.clear(); renderRecite(true); return; }
+  if(!batchItems.length){ renderRecite(true); return; }
+  completeBatch();
 }
 
 const VIEWS={recite:"navRecite",prayer:"navPrayer",qibla:"navQibla",azkar:"navAzkar",tasbih:"navTasbih",duas:"navDuas",learn:"navLearn"};
