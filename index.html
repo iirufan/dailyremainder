@@ -371,8 +371,10 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
 .rec-ayah.read{opacity:.62}
 .rec-read{justify-self:start;margin-top:2px;padding:5px 13px;font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--on);border-radius:999px;cursor:pointer}
 .rec-ayah.read .rec-read{background:var(--band);color:var(--band-ink);border-color:var(--band)}
-/* Dhivehi (Thaana, right-to-left) — official Maldivian translation */
-.dv{font-family:"MV Faseyha","Faruma","MV Boli","Noto Sans Thaana","MV Typewriter",sans-serif;direction:rtl;text-align:right;line-height:2.05;font-size:17px}
+/* Dhivehi (Thaana, right-to-left) — official Maldivian translation.
+   Loads Faruma.ttf from the same folder as index.html if present; otherwise falls back. */
+@font-face{font-family:"Faruma";src:url("Faruma.ttf") format("truetype"),url("faruma.ttf") format("truetype");font-display:swap}
+.dv{font-family:"Faruma","MV Faseyha","MV Boli","Noto Sans Thaana","MV Typewriter",sans-serif;direction:rtl;text-align:right;line-height:2.05;font-size:17px}
 .rec-ayah .dv{color:var(--ink);opacity:.95}
 .verse-card .dv{opacity:.95}
 .rec-loading,.rec-err,.rec-done{font-size:14px;color:var(--muted);padding:10px 2px;text-align:center}
@@ -1847,12 +1849,8 @@ build.day=ymdIn(P.tz,new Date())[2];
 })();
 </script>
 
-
 <script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(()=>{}); });
-}
+if ("serviceWorker" in navigator) { window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(()=>{}); }); }
 </script>
-
 </body>
 </html>
