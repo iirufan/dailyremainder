@@ -576,7 +576,7 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
         <button id="test">Play test sound</button>
         <p class="note" style="flex:1;min-width:180px">Tap a bell beside a prayer to silence it. Reminders ring only while this page is open.</p>
       </div>
-      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 36</p>
+      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 38</p>
     </details>
   </section>
 
@@ -986,16 +986,9 @@ function build(){
   });
   $("placeLabel").textContent=P.name;
   $("greg").textContent=new Intl.DateTimeFormat(undefined,{timeZone:P.tz,weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(now).replace(/\s*\b(AD|BC|CE|BCE)\b/gi,"");
-  let hij="";
-  try{
-    const parts=new Intl.DateTimeFormat("en-u-ca-islamic-umalqura",{timeZone:P.tz,day:"numeric",month:"long",year:"numeric"}).formatToParts(now);
-    const hy=+((parts.find(p=>p.type==="year")||{}).value||0);
-    // A real Hijri year is ~1400–1500. If the engine ignored the Islamic calendar it returns the
-    // Gregorian year (e.g. 2026) and a Gregorian month name ("June") — reject that and use our converter.
-    if(hy>0 && hy<1600) hij=parts.map(p=>p.value).join("");
-  }catch(e){}
-  if(!hij || /\d{5,}/.test(hij)) hij=hijriFallback(now,P.tz);
-  hij=hij.replace(/\s*\b(AH|H)\b/gi,"").trim();
+  // Always use our own tabular Hijri converter — device-independent, identical on every phone and
+  // laptop, and it can only ever produce Islamic month names (never "June").
+  let hij=hijriFallback(now,P.tz).replace(/\s*\b(AH|H)\b/gi,"").trim();
   $("hijri").textContent=hij?(hij+" AH"):"";
   const list=$("list"); list.innerHTML="";
   PRAYERS.forEach(p=>{
