@@ -986,7 +986,13 @@ function build(){
   $("placeLabel").textContent=P.name;
   $("greg").textContent=new Intl.DateTimeFormat(undefined,{timeZone:P.tz,weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(now).replace(/\s*\b(AD|BC|CE|BCE)\b/gi,"");
   let hij="";
-  try{ hij=new Intl.DateTimeFormat("en-u-ca-islamic-umalqura",{timeZone:P.tz,day:"numeric",month:"long",year:"numeric"}).format(now); }catch(e){}
+  try{
+    const parts=new Intl.DateTimeFormat("en-u-ca-islamic-umalqura",{timeZone:P.tz,day:"numeric",month:"long",year:"numeric"}).formatToParts(now);
+    const hy=+((parts.find(p=>p.type==="year")||{}).value||0);
+    // A real Hijri year is ~1400–1500. If the engine ignored the Islamic calendar it returns the
+    // Gregorian year (e.g. 2026) and a Gregorian month name ("June") — reject that and use our converter.
+    if(hy>0 && hy<1600) hij=parts.map(p=>p.value).join("");
+  }catch(e){}
   if(!hij || /\d{5,}/.test(hij)) hij=hijriFallback(now,P.tz);
   hij=hij.replace(/\s*\b(AH|H)\b/gi,"").trim();
   $("hijri").textContent=hij?(hij+" AH"):"";
