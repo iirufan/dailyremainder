@@ -438,13 +438,13 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
 .kahf-s{font-size:12px;color:var(--muted)}
 .kahf-x{border:0;background:var(--band);color:var(--band-ink);width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer}
 .kahf-body{flex:1;overflow:auto;padding:14px 16px calc(28px + env(safe-area-inset-bottom,0px));display:grid;gap:14px;max-width:680px;margin:0 auto;width:100%}
-.kahf-body .bism{font-family:var(--f-ar);font-size:26px;direction:rtl;text-align:center;color:var(--ink);padding:6px 0}
+.kahf-body .bism{font-family:var(--f-ar);font-size:27px;direction:rtl;text-align:center;color:var(--ink);padding:14px 0 10px}
 .kahf-ayah{border:1px solid var(--line);border-radius:12px;padding:12px 13px;display:grid;gap:7px;background:var(--surface)}
 .kahf-ayah .num{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:var(--band);color:var(--band-ink);font-size:12px;font-weight:600;font-family:var(--f-mono);justify-self:start}
 .kahf-ayah .ar{font-family:var(--f-ar);font-size:25px;line-height:1.95;direction:rtl;unicode-bidi:isolate;text-align:right;color:var(--ink)}
 .kahf-ayah .mn{font-size:14px;color:var(--ink);opacity:.92}
 .kahf-load,.kahf-err{text-align:center;color:var(--muted);padding:24px 0}
-.kahf-div{height:0;border-top:1px dashed var(--line);width:100%;margin:2px 0 8px}
+.kahf-div{height:2px;border:0;border-radius:2px;background:linear-gradient(90deg,transparent,var(--brass),transparent);width:62%;max-width:260px;margin:4px auto 18px;opacity:.85}
 .kahf-prog{position:sticky;top:0;z-index:3;background:var(--bg);padding:10px 0 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);margin-bottom:2px}
 .kahf-prog-bar{flex:1;height:8px;border-radius:999px;background:var(--line);overflow:hidden}
 .kahf-prog-bar i{display:block;height:100%;width:0;background:var(--band);border-radius:999px;transition:width .25s ease}
@@ -626,7 +626,7 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
           <li><b>Delivered by:</b> the AlQuran Cloud API (alquran.cloud).</li>
         </ul>
       </div>
-      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 40</p>
+      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 41</p>
     </details>
   </section>
 
@@ -1979,6 +1979,14 @@ function setKahfUpto(n){
   saveKahfUpto(); paintKahfMarks(); updateKahfRemind();
   if(kahfDone()){ const dk="kahf_celebrated_"+dayKeyNow(); if(!store.get(dk,false)){ store.set(dk,true); toast("Māshāʾ Allāh — you finished Sūrat al-Kahf 🌙"); } }
 }
+// Remove the Basmala the Uthmānī edition prepends to āyah 1, whichever spelling of
+// ar-Raḥīm it uses (Arabic yā ي or Farsi yā ی). Al-Kahf āyah 1 itself starts with "al-ḥamd".
+function kahfStrip(t){
+  if(!/^\s*ب/.test(t)) return t;                       // āyah 1 doesn't begin with Bismi → nothing to strip
+  const m=t.match(/ر\S{0,3}ح\S{0,3}[يیىۍ]\S{0,2}م/);   // locate "Raḥīm" tolerant of marks + yā form
+  if(!m) return t;
+  return (t.slice(t.indexOf(m[0])+m[0].length).replace(/^[\sؐ-ًؚ-ٰٟۖ-ۭ]+/,"").trim()) || t;
+}
 async function openKahf(){
   const m=$("kahfModal"), body=$("kahfBody"); if(!m||!body)return;
   m.hidden=false; try{document.body.style.overflow="hidden";}catch(e){}
@@ -2000,7 +2008,7 @@ async function openKahf(){
     html+=`<div class="kahf-hint">Tap an āyah to mark read up to there · tap it again to step back</div>`;
     html+=`<div class="bism">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div><div class="kahf-div"></div>`;
     html+=aA.map((a,i)=>{ const n=a.numberInSurah; const en=eA[i]?eA[i].text:"", dv=dA&&dA[i]&&isThaana(dA[i].text)?dA[i].text:"";
-      const arClean = i===0 ? a.text.replace(/^بِسْمِ[\s\S]*?ٱلرَّحِيمِ\s*/,"") : a.text;
+      const arClean = i===0 ? kahfStrip(a.text) : a.text;
       const trans = recTrans ? `${dv?`<div class="dv" lang="dv" dir="rtl">${dv}</div>`:""}<div class="mn">${en}</div>` : "";
       return `<div class="kahf-ayah" data-n="${n}"><span class="num">${n}</span><div class="ar" lang="ar" dir="rtl">${arClean}</div>${trans}<button class="kahf-read" data-k="${n}">Read to here</button></div>`;
     }).join("");
