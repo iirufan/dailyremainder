@@ -444,6 +444,23 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
 .kahf-ayah .ar{font-family:var(--f-ar);font-size:25px;line-height:1.95;direction:rtl;unicode-bidi:isolate;text-align:right;color:var(--ink)}
 .kahf-ayah .mn{font-size:14px;color:var(--ink);opacity:.92}
 .kahf-load,.kahf-err{text-align:center;color:var(--muted);padding:24px 0}
+.kahf-div{height:0;border-top:1px dashed var(--line);width:100%;margin:2px 0 8px}
+.kahf-prog{position:sticky;top:0;z-index:3;background:var(--bg);padding:10px 0 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.kahf-prog-bar{flex:1;height:8px;border-radius:999px;background:var(--line);overflow:hidden}
+.kahf-prog-bar i{display:block;height:100%;width:0;background:var(--band);border-radius:999px;transition:width .25s ease}
+.kahf-prog-t{font-size:12px;color:var(--muted);font-family:var(--f-mono);white-space:nowrap}
+.kahf-ayah.read{border-color:var(--band)}
+.kahf-read{justify-self:start;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 15px;font-size:13px;cursor:pointer;margin-top:3px}
+.kahf-hint{font-size:12px;color:var(--muted);text-align:center;padding:0 0 4px}
+.src-note{border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:var(--surface);margin-top:4px}
+.src-note .src-ttl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.src-note ul{margin:0;padding-left:16px;display:grid;gap:4px}
+.src-note li{font-size:12.5px;line-height:1.5;color:var(--ink);opacity:.9}
+.src-note b{font-weight:600}
+.kahf-ayah.here .kahf-read{background:var(--brass);color:#1b1205;border-color:var(--brass)}
+.kahf-ayah.read .kahf-read{background:var(--band);color:var(--band-ink);border-color:var(--band)}
+.sp-btn.ghost{background:rgba(255,255,255,.16);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.45);margin-left:8px}
+.sp-btn.ghost.on{background:#fff;color:#0e5a3d;box-shadow:none}
 @media (prefers-reduced-motion: no-preference){.ringing .next-name{animation:pulse 1.2s ease-in-out infinite}}
 @keyframes pulse{50%{opacity:.55}}
 </style>
@@ -600,7 +617,16 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
         <button id="test">Play test sound</button>
         <p class="note" style="flex:1;min-width:180px">Tap a bell beside a prayer to silence it. Reminders ring only while this page is open.</p>
       </div>
-      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 39</p>
+      <div class="src-note">
+        <div class="src-ttl">Sources</div>
+        <ul>
+          <li><b>Qur'ān (Arabic):</b> Uthmānī script — King Fahd Glorious Qur'ān Printing Complex, via Tanzil.net.</li>
+          <li><b>English meaning:</b> Ṣaḥīḥ International.</li>
+          <li><b>Dhivehi meaning:</b> Official Maldivian translation — Office of the President, Maldives.</li>
+          <li><b>Delivered by:</b> the AlQuran Cloud API (alquran.cloud).</li>
+        </ul>
+      </div>
+      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 40</p>
     </details>
   </section>
 
@@ -1920,16 +1946,44 @@ function renderSpecial(){
   el.hidden=false;
   el.innerHTML=`<div class="sp-day">${s.day}</div><div class="sp-ttl">${s.title}</div>`+
     `<ul>${s.items.map(i=>`<li>${i}</li>`).join("")}</ul>`+
-    (s.kahf?`<button class="sp-btn" id="spKahf">📖 Read Sūrat al-Kahf</button>`:"");
+    (s.kahf?`<button class="sp-btn" id="spKahf">📖 Read Sūrat al-Kahf</button><button class="sp-btn ghost" id="spRemind">🔔 Remind me before Maghrib</button>`:"");
   if(s.kahf){ const btn=$("spKahf"); if(btn)btn.onclick=openKahf;
+    const rb=$("spRemind"); if(rb)rb.onclick=toggleKahfRemind;
+    updateKahfRemind();
     const k="kahf_reminded_"+dayKeyNow(); if(!store.get(k,false)){ store.set(k,true); toast("Jumuʿah Mubārak — read Sūrat al-Kahf 🌟"); } }
 }
-/* ---- Sūrat al-Kahf reader ---- */
+/* ---- Sūrat al-Kahf reader (mark "read up to here", Friday special) ---- */
+const KAHF_TOTAL=110;
 let kahfLoaded=false;
+function loadKahfUpto(){ const o=store.get("kahf_upto",null); return (o&&o.day===dayKeyNow())?Math.max(0,Math.min(KAHF_TOTAL,o.n|0)):0; }
+let kahfUpto=loadKahfUpto();
+function saveKahfUpto(){ store.set("kahf_upto",{day:dayKeyNow(),n:kahfUpto}); }
+function kahfDone(){ return kahfUpto>=KAHF_TOTAL; }
+function updateKahfProg(){
+  const f=$("kahfFill"), t=$("kahfProgT"); if(f&&t){ const pct=Math.round(kahfUpto/KAHF_TOTAL*100);
+    f.style.width=pct+"%"; t.textContent=`${kahfUpto} / ${KAHF_TOTAL} read`; }
+}
+function paintKahfMarks(){
+  const body=$("kahfBody"); if(!body)return;
+  body.querySelectorAll(".kahf-ayah").forEach(card=>{
+    const n=+card.dataset.n, read=n<=kahfUpto, here=n===kahfUpto;
+    card.classList.toggle("read",read); card.classList.toggle("here",here);
+    const b=card.querySelector(".kahf-read"); if(b)b.textContent=here?"✓ Read to here":(read?"✓ Read":"Read to here");
+  });
+  updateKahfProg();
+}
+function setKahfUpto(n){
+  // tap the current end-point to step back one; otherwise mark up to the tapped āyah
+  kahfUpto = (n===kahfUpto) ? n-1 : n;
+  if(kahfUpto<0)kahfUpto=0;
+  saveKahfUpto(); paintKahfMarks(); updateKahfRemind();
+  if(kahfDone()){ const dk="kahf_celebrated_"+dayKeyNow(); if(!store.get(dk,false)){ store.set(dk,true); toast("Māshāʾ Allāh — you finished Sūrat al-Kahf 🌙"); } }
+}
 async function openKahf(){
   const m=$("kahfModal"), body=$("kahfBody"); if(!m||!body)return;
   m.hidden=false; try{document.body.style.overflow="hidden";}catch(e){}
-  if(kahfLoaded)return;
+  if(kahfLoaded){ kahfUpto=loadKahfUpto(); paintKahfMarks(); return; }
+  kahfUpto=loadKahfUpto();
   body.innerHTML=`<div class="kahf-load">Loading Sūrat al-Kahf…</div>`;
   try{
     const dvEd=await getDvEdition();
@@ -1942,16 +1996,55 @@ async function openKahf(){
     const jA=await rA.json(), jE=await rE.json();
     const aA=jA.data.ayahs, eA=jE.data.ayahs;
     let dA=null; try{ if(rD&&rD.ok){ const jD=await rD.json(); dA=jD.data.ayahs; } }catch(_){}
-    let html=`<div class="bism">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>`;
-    html+=aA.map((a,i)=>{ const en=eA[i]?eA[i].text:"", dv=dA&&dA[i]&&isThaana(dA[i].text)?dA[i].text:"";
+    let html=`<div class="kahf-prog"><div class="kahf-prog-bar"><i id="kahfFill"></i></div><span class="kahf-prog-t" id="kahfProgT">0 / ${KAHF_TOTAL} read</span></div>`;
+    html+=`<div class="kahf-hint">Tap an āyah to mark read up to there · tap it again to step back</div>`;
+    html+=`<div class="bism">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div><div class="kahf-div"></div>`;
+    html+=aA.map((a,i)=>{ const n=a.numberInSurah; const en=eA[i]?eA[i].text:"", dv=dA&&dA[i]&&isThaana(dA[i].text)?dA[i].text:"";
       const arClean = i===0 ? a.text.replace(/^بِسْمِ[\s\S]*?ٱلرَّحِيمِ\s*/,"") : a.text;
       const trans = recTrans ? `${dv?`<div class="dv" lang="dv" dir="rtl">${dv}</div>`:""}<div class="mn">${en}</div>` : "";
-      return `<div class="kahf-ayah"><span class="num">${a.numberInSurah}</span><div class="ar" lang="ar" dir="rtl">${arClean}</div>${trans}</div>`;
+      return `<div class="kahf-ayah" data-n="${n}"><span class="num">${n}</span><div class="ar" lang="ar" dir="rtl">${arClean}</div>${trans}<button class="kahf-read" data-k="${n}">Read to here</button></div>`;
     }).join("");
     body.innerHTML=html; kahfLoaded=true; body.scrollTop=0;
+    body.onclick=e=>{ const b=e.target.closest(".kahf-read"); if(b)setKahfUpto(+b.dataset.k); };
+    paintKahfMarks();
   }catch(e){ body.innerHTML=`<div class="kahf-err">Couldn't load Sūrat al-Kahf — connect to the internet and try again.</div>`; }
 }
 function closeKahf(){ const m=$("kahfModal"); if(m)m.hidden=true; try{document.body.style.overflow="";}catch(e){} }
+
+/* ---- "Finish Sūrat al-Kahf" reminder — Friday, before Maghrib ---- */
+function kahfRemindOn(){ return store.get("kahf_remind_on",true); }
+function kahfTargets(){
+  try{ const mg=todayTimes&&todayTimes.maghrib; if(!mg)return null;
+    const m=mg.getTime(); return { maghrib:m, targets:[m-150*60000, m-45*60000] };
+  }catch(e){ return null; }
+}
+function updateKahfRemind(){
+  const friday=weekdayIn(P.tz)==="Friday", info=kahfTargets();
+  const active=friday && kahfRemindOn() && !kahfDone() && !!info;
+  store.set("kahf_remind",{ day:dayKeyNow(), enabled:active, done:kahfDone(), maghrib:info?info.maghrib:0, targets:active?info.targets:[] });
+  try{ window.dispatchEvent(new Event("salah:changed")); }catch(e){}   // let the native app reschedule
+  const b=$("spRemind"); if(b){ const ready=("Notification" in window)&&Notification.permission==="granted"; const on=friday&&kahfRemindOn();
+    b.classList.toggle("on",on&&ready); b.textContent=on?(ready?"🔔 Reminder on":"🔔 Enable pop-up"):"🔔 Remind me before Maghrib"; }
+}
+function fireKahfNotif(msg){
+  try{ if(("Notification" in window)&&Notification.permission==="granted"){ const opt={ body:msg, tag:"kahf-reminder", icon:"icon-192.png", badge:"icon-192.png" };
+    if(navigator.serviceWorker&&navigator.serviceWorker.ready){ navigator.serviceWorker.ready.then(r=>r.showNotification("Sūrat al-Kahf",opt)).catch(()=>{ try{new Notification("Sūrat al-Kahf",opt);}catch(_){}}); }
+    else { try{ new Notification("Sūrat al-Kahf",opt); }catch(_){}} } }catch(e){}
+  toast(msg);
+}
+function kahfRemindTick(){
+  if(weekdayIn(P.tz)!=="Friday" || !kahfRemindOn() || kahfDone())return;
+  const info=kahfTargets(); if(!info)return; const now=Date.now(), dk=dayKeyNow();
+  info.targets.forEach((ts,idx)=>{ if(now>=ts && now<info.maghrib){ const fk="kahf_fired_"+dk+"_"+idx;
+    if(!store.get(fk,false)){ store.set(fk,true); fireKahfNotif("Finish Sūrat al-Kahf before Maghrib — a light between the two Fridays 🌙"); } } });
+}
+async function toggleKahfRemind(){
+  const turningOn=!kahfRemindOn();
+  if(turningOn && ("Notification" in window) && Notification.permission==="default"){ try{ await Notification.requestPermission(); }catch(e){} }
+  store.set("kahf_remind_on",turningOn); updateKahfRemind();
+  if(turningOn){ const ok=("Notification" in window)&&Notification.permission==="granted"; toast(ok?"Reminder on — I'll nudge you before Maghrib":"Reminder set — allow notifications for a pop-up"); }
+  else toast("Reminder off");
+}
 
 const VIEWS={recite:"navRecite",prayer:"navPrayer",qibla:"navQibla",azkar:"navAzkar",tasbih:"navTasbih",duas:"navDuas",learn:"navLearn"};
 function show(v){
@@ -1982,15 +2075,18 @@ renderDua();
 renderFab();
 renderMascot();
 show(location.hash.slice(1)||"recite");
+updateKahfRemind();
 refreshWeather(false);
 setInterval(()=>refreshWeather(false), 20*60*1000);
-setInterval(()=>{ const [,,d]=ymdIn(P.tz,new Date()); if(d!==build.day){ build.day=d; build(); renderVerse(); renderMascot(); renderSpecial(); if(document.getElementById("view-azkar").classList.contains("active"))renderAzkar(); } applyTheme(); if(new Date().getSeconds()%20===0) renderSky(); tick(false); },1000);
+setInterval(()=>{ const [,,d]=ymdIn(P.tz,new Date()); if(d!==build.day){ build.day=d; build(); renderVerse(); renderMascot(); renderSpecial(); updateKahfRemind(); if(document.getElementById("view-azkar").classList.contains("active"))renderAzkar(); } applyTheme(); if(new Date().getSeconds()%20===0) renderSky(); kahfRemindTick(); tick(false); },1000);
 build.day=ymdIn(P.tz,new Date())[2];
 })();
 </script>
 
 <script>
-if ("serviceWorker" in navigator) { window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(()=>{}); }); }
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
 </script>
 </body>
 </html>
