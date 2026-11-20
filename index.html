@@ -365,7 +365,18 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
 .rec-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--on),var(--brass));border-radius:999px;transition:width .6s ease}
 .rec-progtxt{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:-2px}
 .rec-list{display:grid;gap:12px}
-.rec-ayah{border:1px solid var(--line);border-radius:12px;padding:12px 13px;display:grid;gap:7px;background:var(--bg)}
+.rec-ayah{border:1px solid var(--line);border-radius:12px;padding:12px 13px;display:grid;gap:7px;background:var(--bg);scroll-margin-top:72px}
+.rec-dash{margin-top:11px;display:grid;gap:10px}
+.rec-tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.rec-tile{border:1px solid var(--line);border-radius:13px;padding:10px 12px;background:var(--surface);display:grid;gap:2px;align-content:start}
+.rec-tile .rt-k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rec-tile .rt-v{font-size:16px;font-weight:600;color:var(--ink);line-height:1.22}
+.rec-tile.big .rt-v{font-size:26px;letter-spacing:-.01em;color:var(--brass)}
+.rec-tile .rt-s{font-size:11.5px;color:var(--muted)}
+.rt-barm{height:6px;border-radius:999px;background:var(--line);overflow:hidden;margin-top:4px}
+.rt-barm i{display:block;height:100%;width:0;background:var(--brass);border-radius:999px;transition:width .3s ease}
+.rec-motiv{font-size:13px;line-height:1.55;color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface);background:linear-gradient(100deg,color-mix(in srgb,var(--band) 16%,var(--surface)),var(--surface))}
+.rec-motiv b{font-weight:600}
 .rec-ref{font-size:12px;font-weight:600;color:var(--brass)}
 .rec-ayah .ar{font-family:var(--f-ar);font-size:25px;line-height:1.95;direction:rtl;unicode-bidi:isolate;text-align:right;color:var(--ink)}
 .rec-ayah .mn{font-size:14px;color:var(--ink);opacity:.92}
@@ -449,7 +460,9 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
 .kahf-prog-bar{flex:1;height:8px;border-radius:999px;background:var(--line);overflow:hidden}
 .kahf-prog-bar i{display:block;height:100%;width:0;background:var(--band);border-radius:999px;transition:width .25s ease}
 .kahf-prog-t{font-size:12px;color:var(--muted);font-family:var(--f-mono);white-space:nowrap}
-.kahf-ayah.read{border-color:var(--band)}
+.kahf-ayah{scroll-margin-top:66px}
+.kahf-ayah.read{border-color:var(--band);background:rgba(47,133,90,.13)}
+:root[data-theme="dark"] .kahf-ayah.read{background:rgba(96,196,148,.14)}
 .kahf-read{justify-self:start;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 15px;font-size:13px;cursor:pointer;margin-top:3px}
 .kahf-hint{font-size:12px;color:var(--muted);text-align:center;padding:0 0 4px}
 .src-note{border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:var(--surface);margin-top:4px}
@@ -506,6 +519,15 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
       <div class="rec-sub" id="recSet"></div>
       <div class="rec-bar" aria-hidden="true"><i id="recBar"></i></div>
       <div class="rec-progtxt" id="recProg"></div>
+      <div class="rec-dash" id="recDash" hidden>
+        <div class="rec-tiles">
+          <div class="rec-tile big"><div class="rt-k">Qur'ān complete</div><div class="rt-v" id="rtPct">0%</div><div class="rt-s" id="rtSurahCount"></div></div>
+          <div class="rec-tile"><div class="rt-k">Reading now</div><div class="rt-v" id="rtSurah">—</div><div class="rt-s" id="rtSurahSub"></div></div>
+          <div class="rec-tile"><div class="rt-k">This sūrah</div><div class="rt-v" id="rtToGo">—</div><div class="rt-barm"><i id="rtSurahBar"></i></div></div>
+          <div class="rec-tile"><div class="rt-k">Up next</div><div class="rt-v" id="rtNext">—</div></div>
+        </div>
+        <div class="rec-motiv" id="recMotiv"></div>
+      </div>
       <div class="rec-list" id="recList"></div>
       <div class="rec-actions">
         <button class="btn-brass" id="recMark">✓ Mark as read</button>
@@ -626,7 +648,7 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
           <li><b>Delivered by:</b> the AlQuran Cloud API (alquran.cloud).</li>
         </ul>
       </div>
-      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 41</p>
+      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 42</p>
     </details>
   </section>
 
@@ -1856,6 +1878,8 @@ async function getAyah(n){
 }
 // Āyah count of each of the 114 sūrahs (Ḥafṣ) — lets us size a day's reading by sūrah.
 const SURAH_AYAHS=[7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+const SURAH_NAMES=["Al-Fātiḥah","Al-Baqarah","Āl ʿImrān","An-Nisāʾ","Al-Māʾidah","Al-Anʿām","Al-Aʿrāf","Al-Anfāl","At-Tawbah","Yūnus","Hūd","Yūsuf","Ar-Raʿd","Ibrāhīm","Al-Ḥijr","An-Naḥl","Al-Isrāʾ","Al-Kahf","Maryam","Ṭā-Hā","Al-Anbiyāʾ","Al-Ḥajj","Al-Muʾminūn","An-Nūr","Al-Furqān","Ash-Shuʿarāʾ","An-Naml","Al-Qaṣaṣ","Al-ʿAnkabūt","Ar-Rūm","Luqmān","As-Sajdah","Al-Aḥzāb","Sabaʾ","Fāṭir","Yā-Sīn","Aṣ-Ṣāffāt","Ṣād","Az-Zumar","Ghāfir","Fuṣṣilat","Ash-Shūrā","Az-Zukhruf","Ad-Dukhān","Al-Jāthiyah","Al-Aḥqāf","Muḥammad","Al-Fatḥ","Al-Ḥujurāt","Qāf","Adh-Dhāriyāt","Aṭ-Ṭūr","An-Najm","Al-Qamar","Ar-Raḥmān","Al-Wāqiʿah","Al-Ḥadīd","Al-Mujādila","Al-Ḥashr","Al-Mumtaḥanah","Aṣ-Ṣaff","Al-Jumuʿah","Al-Munāfiqūn","At-Taghābun","Aṭ-Ṭalāq","At-Taḥrīm","Al-Mulk","Al-Qalam","Al-Ḥāqqah","Al-Maʿārij","Nūḥ","Al-Jinn","Al-Muzzammil","Al-Muddaththir","Al-Qiyāmah","Al-Insān","Al-Mursalāt","An-Nabaʾ","An-Nāziʿāt","ʿAbasa","At-Takwīr","Al-Infiṭār","Al-Muṭaffifīn","Al-Inshiqāq","Al-Burūj","Aṭ-Ṭāriq","Al-Aʿlā","Al-Ghāshiyah","Al-Fajr","Al-Balad","Ash-Shams","Al-Layl","Aḍ-Ḍuḥā","Ash-Sharḥ","At-Tīn","Al-ʿAlaq","Al-Qadr","Al-Bayyinah","Az-Zalzalah","Al-ʿĀdiyāt","Al-Qāriʿah","At-Takāthur","Al-ʿAṣr","Al-Humazah","Al-Fīl","Quraysh","Al-Māʿūn","Al-Kawthar","Al-Kāfirūn","An-Naṣr","Al-Masad","Al-Ikhlāṣ","Al-Falaq","An-Nās"];
+function surahName(n){ return SURAH_NAMES[n-1]||("Sūrah "+n); }
 function surahInfoFor(g){ let cum=0; for(let i=0;i<114;i++){ if(g<=cum+SURAH_AYAHS[i]) return {surah:i+1,numberInSurah:g-cum,len:SURAH_AYAHS[i],endGlobal:cum+SURAH_AYAHS[i]}; cum+=SURAH_AYAHS[i]; } return null; }
 function computeBatchEnd(start){ const info=surahInfoFor(start); if(info && info.len<8) return Math.min(QURAN_TOTAL, info.endGlobal); return Math.min(QURAN_TOTAL, start+recPerDay-1); }
 
@@ -1868,7 +1892,30 @@ function updateRecProg(){
   const done=Math.min(QURAN_TOTAL, recPos + (recPos<QURAN_TOTAL ? batchRead.size : 0));
   const pct=done/QURAN_TOTAL*100;
   if($("recBar"))$("recBar").style.width=pct.toFixed(2)+"%";
-  if($("recProg"))$("recProg").textContent=`${done} of ${QURAN_TOTAL} āyāt · ${pct.toFixed(1)}%`;
+  if($("recProg"))$("recProg").textContent=`${done.toLocaleString()} of ${QURAN_TOTAL.toLocaleString()} āyāt · ${pct.toFixed(1)}%`;
+  updateRecDash(done,pct);
+}
+function updateRecDash(done,pct){
+  const dash=$("recDash"); if(!dash)return; dash.hidden=false;
+  const complete = done>=QURAN_TOTAL;
+  const pos=Math.min(done+1,QURAN_TOTAL), cur=surahInfoFor(pos);
+  if($("rtPct"))$("rtPct").textContent=pct.toFixed(1)+"%";
+  if(cur){
+    const startG=cur.endGlobal-cur.len, readIn=Math.max(0,Math.min(cur.len,done-startG)), toGo=Math.max(0,cur.len-readIn);
+    if($("rtSurahCount"))$("rtSurahCount").textContent=`Sūrah ${cur.surah} of 114`;
+    if($("rtSurah"))$("rtSurah").textContent=`${cur.surah}. ${surahName(cur.surah)}`;
+    if($("rtSurahSub"))$("rtSurahSub").textContent=`āyah ${Math.min(readIn+1,cur.len)} of ${cur.len}`;
+    if($("rtToGo"))$("rtToGo").textContent = complete ? "Done ✓" : (toGo>0?`${toGo} āyāt to go`:"Done ✓");
+    if($("rtSurahBar"))$("rtSurahBar").style.width=(readIn/cur.len*100).toFixed(1)+"%";
+    if($("rtNext"))$("rtNext").textContent = complete ? "🎉 Completed" : (cur.surah<114?`${cur.surah+1}. ${surahName(cur.surah+1)}`:"🎉 Final sūrah");
+  }
+  const mv=$("recMotiv"); if(!mv)return;
+  if(complete){ mv.innerHTML="🎉 <b>Māshāʾ Allāh</b> — you have completed the Qur'ān. May Allah accept it from you."; return; }
+  const left=QURAN_TOTAL-done, per=Math.max(1,recPerDay), days=Math.ceil(left/per);
+  const fin=new Date(); fin.setDate(fin.getDate()+days);
+  let finStr=""; try{ finStr=fin.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); }catch(e){}
+  const emoji = pct>=90?"🏁":pct>=75?"🌟":pct>=50?"🔥":pct>=25?"💪":"🌱";
+  mv.innerHTML=`${emoji} <b>${left.toLocaleString()} āyāt</b> to go. At ${per}/day you'll finish in about <b>${days} day${days===1?"":"s"}</b>${finStr?` — around <b>${finStr}</b>`:""}. Read a little extra today and reach it sooner. 🤍`;
 }
 async function renderRecite(force){
   if($("recUndo"))$("recUndo").hidden = recPrev==null;
@@ -1889,6 +1936,7 @@ async function renderRecite(force){
   }
   paintBatch();
 }
+let recScrollTop=false;
 function paintBatch(){
   const list=$("recList"); if(!list)return;
   list.innerHTML=batchItems.map((o,i)=>{ const g=batchStart+i, read=batchRead.has(g);
@@ -1898,6 +1946,7 @@ function paintBatch(){
   list.querySelectorAll(".rec-read").forEach(b=>b.onclick=()=>markAyahRead(+b.dataset.g));
   const mark=$("recMark"); if(mark) mark.textContent = batchRead.size>=batchItems.length && batchItems.length ? "✓ Finish today's reading" : "✓ Mark all as read";
   updateRecProg();
+  if(recScrollTop){ recScrollTop=false; const first=list.querySelector(".rec-ayah"); if(first){ requestAnimationFrame(()=>{ try{ first.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){} }); } }
 }
 function saverecPartial(){ recPartial = batchRead.size ? {start:batchStart, read:[...batchRead]} : null; store.set("rec_partial", recPartial); }
 function markAyahRead(g){
@@ -1909,7 +1958,7 @@ function completeBatch(){
   recPrev=recPos; store.set("rec_prev",recPrev);                 // remember where we were, for undo
   recPos=Math.max(recPos,batchEnd); store.set("rec_pos",recPos); store.set("rec_last",dayKeyNow());
   batchStart=0; batchItems=[]; batchRead.clear(); recPartial=null; store.set("rec_partial",null);
-  celebrate("Māshā'Allāh",false); renderRecite(true);
+  celebrate("Māshā'Allāh",false); recScrollTop=true; renderRecite(true);
 }
 function recUndo(){
   if(recPrev==null)return;
@@ -1987,10 +2036,15 @@ function kahfStrip(t){
   if(!m) return t;
   return (t.slice(t.indexOf(m[0])+m[0].length).replace(/^[\sؐ-ًؚ-ٰٟۖ-ۭ]+/,"").trim()) || t;
 }
+function scrollKahfResume(){
+  if(kahfUpto<=0)return; const body=$("kahfBody"); if(!body)return;
+  const el=body.querySelector('.kahf-ayah[data-n="'+kahfUpto+'"]');
+  if(el){ try{ el.scrollIntoView({block:"start"}); }catch(e){ body.scrollTop=Math.max(0,el.offsetTop-66); } }
+}
 async function openKahf(){
   const m=$("kahfModal"), body=$("kahfBody"); if(!m||!body)return;
   m.hidden=false; try{document.body.style.overflow="hidden";}catch(e){}
-  if(kahfLoaded){ kahfUpto=loadKahfUpto(); paintKahfMarks(); return; }
+  if(kahfLoaded){ kahfUpto=loadKahfUpto(); paintKahfMarks(); scrollKahfResume(); return; }
   kahfUpto=loadKahfUpto();
   body.innerHTML=`<div class="kahf-load">Loading Sūrat al-Kahf…</div>`;
   try{
@@ -2014,7 +2068,7 @@ async function openKahf(){
     }).join("");
     body.innerHTML=html; kahfLoaded=true; body.scrollTop=0;
     body.onclick=e=>{ const b=e.target.closest(".kahf-read"); if(b)setKahfUpto(+b.dataset.k); };
-    paintKahfMarks();
+    paintKahfMarks(); scrollKahfResume();
   }catch(e){ body.innerHTML=`<div class="kahf-err">Couldn't load Sūrat al-Kahf — connect to the internet and try again.</div>`; }
 }
 function closeKahf(){ const m=$("kahfModal"); if(m)m.hidden=true; try{document.body.style.overflow="";}catch(e){} }
