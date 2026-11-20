@@ -422,6 +422,28 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
 .nav button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .nav button[aria-current="true"]{color:var(--on)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;z-index:20;max-width:calc(100% - 32px);text-align:center}
+/* today's special (Jumuʿah etc.) */
+.special{border-radius:16px;padding:16px 16px;color:#fff;background:linear-gradient(145deg,#15563f 0%,#0e7a53 55%,#b8902f 140%);box-shadow:0 8px 22px rgba(0,0,0,.22);position:relative;overflow:hidden}
+.special::after{content:"☪";position:absolute;right:12px;bottom:-6px;font-size:66px;opacity:.12}
+.special .sp-day{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.9}
+.special .sp-ttl{font-family:var(--f-display);font-size:22px;margin:2px 0 8px}
+.special ul{margin:0;padding:0;list-style:none;display:grid;gap:7px}
+.special li{font-size:14px;line-height:1.45;padding-left:18px;position:relative}
+.special li::before{content:"◆";position:absolute;left:0;color:#ffe29a;font-size:11px;top:3px}
+.special .sp-btn{margin-top:13px;background:#fff;color:#0e5a3d;border:0;border-radius:999px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer}
+/* Sūrat al-Kahf reader */
+.kahf{position:fixed;inset:0;z-index:45;background:var(--bg);display:flex;flex-direction:column}
+.kahf-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;border-bottom:1px solid var(--line);background:var(--surface)}
+.kahf-t{font-family:var(--f-display);font-size:20px;color:var(--ink)}
+.kahf-s{font-size:12px;color:var(--muted)}
+.kahf-x{border:0;background:var(--band);color:var(--band-ink);width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer}
+.kahf-body{flex:1;overflow:auto;padding:14px 16px calc(28px + env(safe-area-inset-bottom,0px));display:grid;gap:14px;max-width:680px;margin:0 auto;width:100%}
+.kahf-body .bism{font-family:var(--f-ar);font-size:26px;direction:rtl;text-align:center;color:var(--ink);padding:6px 0}
+.kahf-ayah{border:1px solid var(--line);border-radius:12px;padding:12px 13px;display:grid;gap:7px;background:var(--surface)}
+.kahf-ayah .num{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:var(--band);color:var(--band-ink);font-size:12px;font-weight:600;font-family:var(--f-mono);justify-self:start}
+.kahf-ayah .ar{font-family:var(--f-ar);font-size:25px;line-height:1.95;direction:rtl;unicode-bidi:isolate;text-align:right;color:var(--ink)}
+.kahf-ayah .mn{font-size:14px;color:var(--ink);opacity:.92}
+.kahf-load,.kahf-err{text-align:center;color:var(--muted);padding:24px 0}
 @media (prefers-reduced-motion: no-preference){.ringing .next-name{animation:pulse 1.2s ease-in-out infinite}}
 @keyframes pulse{50%{opacity:.55}}
 </style>
@@ -450,6 +472,8 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
     </header>
 
     <div class="wx" id="wxChip" hidden></div>
+
+    <div class="special" id="specialCard" hidden></div>
 
     <div class="verse-card" id="verseCard">
       <div class="lbl">Verse of the day</div>
@@ -576,7 +600,7 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
         <button id="test">Play test sound</button>
         <p class="note" style="flex:1;min-width:180px">Tap a bell beside a prayer to silence it. Reminders ring only while this page is open.</p>
       </div>
-      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 38</p>
+      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 39</p>
     </details>
   </section>
 
@@ -788,6 +812,14 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
   <div class="mp-badges" id="mpBadges"></div>
   <div class="mp-verse"><div class="ar" id="mpVerseAr" lang="ar"></div><div class="tr" id="mpVerseTr"></div><div class="ref" id="mpVerseRef"></div></div>
   <button class="mp-close" id="mpClose">Close</button>
+</div>
+
+<div class="kahf" id="kahfModal" hidden>
+  <div class="kahf-head">
+    <div><div class="kahf-t">Sūrat al-Kahf</div><div class="kahf-s">The Cave · 110 āyāt</div></div>
+    <button class="kahf-x" id="kahfClose" aria-label="Close">✕</button>
+  </div>
+  <div class="kahf-body" id="kahfBody"></div>
 </div>
 
 <div class="celebrate" id="celebrate" hidden>
@@ -1865,18 +1897,75 @@ function recMarkRead(){
   completeBatch();
 }
 
+/* =================== TODAY'S SPECIAL (Jumuʿah & more) =================== */
+function weekdayIn(tz){ try{ return new Intl.DateTimeFormat("en-US",{timeZone:tz,weekday:"long"}).format(new Date()); }catch(e){ return new Date().toLocaleDateString("en-US",{weekday:"long"}); } }
+function todaySpecial(){
+  const wd=weekdayIn(P.tz);
+  if(wd==="Friday") return {day:"Friday · Jumuʿah", title:"Today is Jumuʿah", kahf:true, items:[
+    "Read Sūrat al-Kahf — a light shines for you between the two Fridays.",
+    "Send abundant ṣalawāt on the Prophet ﷺ.",
+    "There is an hour of acceptance before Maghrib — make duʿāʾ.",
+    "Make ghusl, wear your best, and go early to the mosque."
+  ]};
+  if(wd==="Monday"||wd==="Thursday") return {day:wd, title:"A day to fast", kahf:false, items:[
+    "A recommended day to fast — deeds are raised to Allah.",
+    "Increase in dhikr, ṣalawāt and istighfār."
+  ]};
+  return null;
+}
+function renderSpecial(){
+  const el=$("specialCard"); if(!el)return;
+  const s=todaySpecial();
+  if(!s){ el.hidden=true; return; }
+  el.hidden=false;
+  el.innerHTML=`<div class="sp-day">${s.day}</div><div class="sp-ttl">${s.title}</div>`+
+    `<ul>${s.items.map(i=>`<li>${i}</li>`).join("")}</ul>`+
+    (s.kahf?`<button class="sp-btn" id="spKahf">📖 Read Sūrat al-Kahf</button>`:"");
+  if(s.kahf){ const btn=$("spKahf"); if(btn)btn.onclick=openKahf;
+    const k="kahf_reminded_"+dayKeyNow(); if(!store.get(k,false)){ store.set(k,true); toast("Jumuʿah Mubārak — read Sūrat al-Kahf 🌟"); } }
+}
+/* ---- Sūrat al-Kahf reader ---- */
+let kahfLoaded=false;
+async function openKahf(){
+  const m=$("kahfModal"), body=$("kahfBody"); if(!m||!body)return;
+  m.hidden=false; try{document.body.style.overflow="hidden";}catch(e){}
+  if(kahfLoaded)return;
+  body.innerHTML=`<div class="kahf-load">Loading Sūrat al-Kahf…</div>`;
+  try{
+    const dvEd=await getDvEdition();
+    const base="https://api.alquran.cloud/v1/surah/18/";
+    const [rA,rE,rD]=await Promise.all([
+      fetch(base+"quran-uthmani",{cache:"force-cache"}),
+      fetch(base+"en.sahih",{cache:"force-cache"}),
+      dvEd?fetch(base+dvEd,{cache:"force-cache"}).catch(()=>null):Promise.resolve(null)
+    ]);
+    const jA=await rA.json(), jE=await rE.json();
+    const aA=jA.data.ayahs, eA=jE.data.ayahs;
+    let dA=null; try{ if(rD&&rD.ok){ const jD=await rD.json(); dA=jD.data.ayahs; } }catch(_){}
+    let html=`<div class="bism">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>`;
+    html+=aA.map((a,i)=>{ const en=eA[i]?eA[i].text:"", dv=dA&&dA[i]&&isThaana(dA[i].text)?dA[i].text:"";
+      const arClean = i===0 ? a.text.replace(/^بِسْمِ[\s\S]*?ٱلرَّحِيمِ\s*/,"") : a.text;
+      const trans = recTrans ? `${dv?`<div class="dv" lang="dv" dir="rtl">${dv}</div>`:""}<div class="mn">${en}</div>` : "";
+      return `<div class="kahf-ayah"><span class="num">${a.numberInSurah}</span><div class="ar" lang="ar" dir="rtl">${arClean}</div>${trans}</div>`;
+    }).join("");
+    body.innerHTML=html; kahfLoaded=true; body.scrollTop=0;
+  }catch(e){ body.innerHTML=`<div class="kahf-err">Couldn't load Sūrat al-Kahf — connect to the internet and try again.</div>`; }
+}
+function closeKahf(){ const m=$("kahfModal"); if(m)m.hidden=true; try{document.body.style.overflow="";}catch(e){} }
+
 const VIEWS={recite:"navRecite",prayer:"navPrayer",qibla:"navQibla",azkar:"navAzkar",tasbih:"navTasbih",duas:"navDuas",learn:"navLearn"};
 function show(v){
   if(!VIEWS[v])v="recite";
   try{ document.body.dataset.view=v; }catch(_){ }
   document.querySelectorAll(".view").forEach(s=>s.classList.toggle("active",s.id==="view-"+v));
   for(const [name,btn] of Object.entries(VIEWS)) $(btn).setAttribute("aria-current",String(name===v));
-  if(v==="recite")renderRecite(); if(v==="azkar")renderAzkar(); if(v==="tasbih"){ renderTasbih(); renderDua(); } if(v==="qibla")renderQibla(); if(v==="duas")renderDuas();
+  if(v==="recite"){ renderRecite(); renderSpecial(); } if(v==="azkar")renderAzkar(); if(v==="tasbih"){ renderTasbih(); renderDua(); } if(v==="qibla")renderQibla(); if(v==="duas")renderDuas();
   if(location.hash.slice(1)!==v){ try{history.replaceState(null,"","#"+v)}catch(_){ location.hash=v; } }
 }
 $("navRecite").onclick=()=>show("recite"); $("navPrayer").onclick=()=>show("prayer"); $("navQibla").onclick=()=>show("qibla"); $("navAzkar").onclick=()=>show("azkar"); $("navTasbih").onclick=()=>show("tasbih"); $("navDuas").onclick=()=>show("duas"); $("navLearn").onclick=()=>show("learn");
 $("recMark").addEventListener("click",recMarkRead);
 $("recUndo").addEventListener("click",recUndo);
+$("kahfClose").addEventListener("click",closeKahf);
 $("recTransOn").checked=recTrans;
 $("recTransOn").addEventListener("change",e=>{ recTrans=e.target.checked; store.set("rec_trans",recTrans); if(batchItems.length)paintBatch(); toast(recTrans?"Translation shown":"Translation hidden"); });
 $("recPerDayInput").value=recPerDay;
@@ -1895,7 +1984,7 @@ renderMascot();
 show(location.hash.slice(1)||"recite");
 refreshWeather(false);
 setInterval(()=>refreshWeather(false), 20*60*1000);
-setInterval(()=>{ const [,,d]=ymdIn(P.tz,new Date()); if(d!==build.day){ build.day=d; build(); renderVerse(); renderMascot(); if(document.getElementById("view-azkar").classList.contains("active"))renderAzkar(); } applyTheme(); if(new Date().getSeconds()%20===0) renderSky(); tick(false); },1000);
+setInterval(()=>{ const [,,d]=ymdIn(P.tz,new Date()); if(d!==build.day){ build.day=d; build(); renderVerse(); renderMascot(); renderSpecial(); if(document.getElementById("view-azkar").classList.contains("active"))renderAzkar(); } applyTheme(); if(new Date().getSeconds()%20===0) renderSky(); tick(false); },1000);
 build.day=ymdIn(P.tz,new Date())[2];
 })();
 </script>
