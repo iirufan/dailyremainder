@@ -332,7 +332,7 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
 
 /* ---- mascot assistant ---- */
 .mascot{position:fixed;left:max(14px,env(safe-area-inset-left,0px));bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:15;
-  width:58px;height:58px;border-radius:50%;padding:0;font-size:30px;line-height:1;background:var(--surface);border:1px solid var(--line);box-shadow:0 5px 16px rgba(0,0,0,.22);display:grid;place-items:center}
+  width:52px;height:52px;border-radius:50%;padding:0;font-size:38px;line-height:1;background:transparent;border:0;box-shadow:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));display:grid;place-items:center}
 .mascot .dot{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:999px;background:var(--brass);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px;font-family:var(--f-mono)}
 .mascot-pop{position:fixed;left:max(14px,env(safe-area-inset-left,0px));right:max(14px,env(safe-area-inset-right,0px));bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:30;
   max-width:360px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:16px;display:grid;gap:10px}
@@ -400,6 +400,10 @@ body.rec-view #treeSide{display:block}
 .srch-res .sr-b{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 13px;font-size:12.5px;cursor:pointer}
 .srch-res .sr-b.go{background:var(--band);color:var(--band-ink);border-color:var(--band);font-weight:600}
 .srch-count{font-size:12px;color:var(--muted);text-align:center}
+.srch-sug{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:2px 16px 6px;max-width:680px;margin:0 auto;width:100%}
+.srch-sug .sg-lab{font-size:12.5px;color:var(--muted)}
+.srch-sug button{border:1px solid var(--band);background:color-mix(in srgb,var(--band) 10%,var(--surface));color:var(--ink);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.srch-sug button:active{background:color-mix(in srgb,var(--band) 22%,var(--surface))}
 .srch .kahf-body{display:flex;flex-direction:column;gap:12px;align-items:stretch;justify-content:flex-start}
 .srch .srch-res,.srch .srch-quick{align-content:start}
 .rec-ref{font-size:12px;font-weight:600;color:var(--brass)}
@@ -695,7 +699,7 @@ body.rec-view #treeSide{display:block}
           <li><b>Delivered by:</b> the AlQuran Cloud API (alquran.cloud).</li>
         </ul>
       </div>
-      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 47</p>
+      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 49</p>
     </details>
   </section>
 
@@ -929,6 +933,7 @@ body.rec-view #treeSide{display:block}
     <button class="srch-go" id="srchGo">Search</button>
   </div>
   <div class="srch-hint">Type words to find them in the Qur'ān, or a reference like <b>2:255</b>, or a sūrah name or number.</div>
+  <div class="srch-sug" id="srchSug" hidden></div>
   <div class="kahf-body" id="srchBody"></div>
 </div>
 
@@ -1664,9 +1669,7 @@ function badgeList(sc){ return [
 ]; }
 // A simple emoji companion that shows who you chose and how the day is going.
 function personEmoji(level,g){
-  const who = g==="woman" ? "🧕" : "🧔";
-  const mood = level<=0 ? "😔" : level===1 ? "🙂" : level<3 ? "😊" : level<4 ? "🤲" : "😎";
-  return who + mood;
+  return level<=0 ? "😔" : level===1 ? "🙂" : level<3 ? "😊" : level<4 ? "🤲" : "😎";
 }
 function renderMascot(){
   const sc=dayScore();
@@ -1973,6 +1976,7 @@ function updateRecProg(){
   if($("recBar"))$("recBar").style.width=pct.toFixed(2)+"%";
   if($("recProg"))$("recProg").textContent=`${done.toLocaleString()} of ${QURAN_TOTAL.toLocaleString()} āyāt · ${pct.toFixed(1)}%`;
   updateRecDash(done,pct);
+  updateRecDoneSurahs();
   renderTree(pct);
 }
 function surahFirstGlobal(n){ let c=0; for(let i=0;i<n-1;i++)c+=SURAH_AYAHS[i]; return c+1; }
@@ -1980,7 +1984,14 @@ function surahFirstGlobal(n){ let c=0; for(let i=0;i<n-1;i++)c+=SURAH_AYAHS[i]; 
 function tFlower(x,y,r,col){ let p=`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})">`; for(let a=0;a<5;a++){ const ang=a*72*Math.PI/180; p+=`<circle cx="${(Math.cos(ang)*r).toFixed(1)}" cy="${(Math.sin(ang)*r).toFixed(1)}" r="${(r*0.6).toFixed(1)}" fill="${col}"/>`; } return p+`<circle r="${(r*0.5).toFixed(1)}" fill="#f5b53a"/></g>`; }
 function tGrapes(x,y){ const c="#7b4ea6",c2="#5f3a88"; let p=`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><path d="M0 -2 l0 -5" stroke="#4a7a3a" stroke-width="1.4"/>`; const rows=[[0],[-3.2,3.2],[-5,0,5],[-3.2,3.2],[0]]; let yy=0; rows.forEach((row,ri)=>{ row.forEach(dx=>{ p+=`<circle cx="${dx}" cy="${yy}" r="3" fill="${ri%2?c2:c}"/>`; }); yy+=4.5; }); return p+"</g>"; }
 function tSpark(x,y){ return `<path d="M${x} ${y-5} L${x+1.4} ${y-1.4} L${x+5} ${y} L${x+1.4} ${y+1.4} L${x} ${y+5} L${x-1.4} ${y+1.4} L${x-5} ${y} L${x-1.4} ${y-1.4} Z"/>`; }
-let recLastPct=0;
+let recLastPct=0, recDoneSurahs=0;
+function completedSurahCount(){ let c=0,acc=0; for(let i=0;i<114;i++){ acc+=SURAH_AYAHS[i]; if(recPos>=acc)c++; else break; } return c; }
+function updateRecDoneSurahs(){
+  const c=completedSurahCount(), prev=store.get("rec_done_surahs",null);
+  if(prev!=null && c>prev) toast(`🌸 Sūrah ${surahName(c)} complete — a flower blooms on your vine`);
+  if(prev!==c) store.set("rec_done_surahs",c);
+  recDoneSurahs=c; return c;
+}
 function renderTree(pct){
   if(typeof pct==="number")recLastPct=pct;
   const svg=$("treeSvg"), host=$("treeSide"); if(!svg||!host)return;
@@ -1995,6 +2006,7 @@ function renderTree(pct){
     P.push(`<path d="M${cx} ${baseY} Q ${cx-2} ${ty+6} ${cx} ${ty}" stroke="#4a7a3a" stroke-width="3" fill="none" stroke-linecap="round"/>`);
     P.push(`<ellipse cx="${cx-6}" cy="${ty+2}" rx="7" ry="3.4" fill="#53b67e" transform="rotate(-24 ${cx-6} ${ty+2})"/>`);
     P.push(`<ellipse cx="${cx+6}" cy="${ty-2}" rx="7" ry="3.4" fill="#3f9f68" transform="rotate(24 ${cx+6} ${ty-2})"/>`);
+    if(recDoneSurahs>0){ const n=Math.min(recDoneSurahs,6); for(let k=0;k<n;k++){ const side=k%2?1:-1; P.push(tFlower(cx+side*(7+k*2), ty-2-k*5, 2.3, k%2?'#ffd9e6':'#fff3c4')); } }
     svg.innerHTML=P.join(""); return;
   }
   const trunkX=y=>{ const t=(baseY-y)/Math.max(1,trunkH); return cx+Math.sin(t*Math.PI*1.1)*sway*(1-t*0.3); };
@@ -2007,13 +2019,14 @@ function renderTree(pct){
     P.push(`<path d="M${x.toFixed(1)} ${y.toFixed(1)} Q ${(x+side*bl*0.5).toFixed(1)} ${(y-3).toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}" stroke="#6e4422" stroke-width="1.5" fill="none"/>`);
     P.push(`<ellipse cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" rx="${(lr*1.5).toFixed(1)}" ry="${lr.toFixed(1)}" fill="${i%2?'#2f8f5b':'#3fa368'}" transform="rotate(${side*28} ${ex.toFixed(1)} ${ey.toFixed(1)})"/>`);
     P.push(`<circle cx="${(x+side*bl*0.55).toFixed(1)}" cy="${(y-2).toFixed(1)}" r="${(lr*0.8).toFixed(1)}" fill="#53b67e"/>`);
-    if(g>0.55&&i>nodes-4){ const fo=Math.min(1,(g-0.55)/0.3); P.push(`<g opacity="${fo.toFixed(2)}">${tFlower(ex,ey-3,2.4+1.2*fo,i%2?'#ffd9e6':'#fff3c4')}</g>`); }
   }
   const cr=5+W*0.42*g;
   const crownBlobs=[[0,0,1],[-0.6,0.2,0.66],[0.6,0.2,0.66],[0,-0.5,0.7],[-0.35,-0.15,0.6],[0.35,-0.15,0.6]];
   let crown=""; crownBlobs.forEach((b,i)=>{ crown+=`<circle cx="${(cx+b[0]*cr).toFixed(1)}" cy="${(topY+b[1]*cr-cr*0.2).toFixed(1)}" r="${(cr*b[2]).toFixed(1)}" fill="${i%2?'#2f8f5b':'#3fa368'}"/>`; });
   P.push(`<g>${crown}</g>`);
-  if(g>0.55){ const fo=Math.min(1,(g-0.55)/0.3), fs=[[-0.42,-0.2],[0.32,-0.4],[0.12,0.22],[-0.2,0.36]]; let fl=""; const n=Math.round(fs.length*fo); for(let i=0;i<n;i++){const s=fs[i]; fl+=tFlower(cx+s[0]*cr, topY-cr*0.2+s[1]*cr, 2.4+1.2*fo, i%2?'#ffd9e6':'#fff3c4');} P.push(`<g opacity="${fo.toFixed(2)}">${fl}</g>`); }
+  // One flower per completed sūrah, blooming up the vine
+  const fln=Math.min(recDoneSurahs||0,64);
+  if(fln>0){ let fl=""; for(let k=0;k<fln;k++){ const frac=(k+1)/(fln+1), y=baseY-frac*trunkH, x=trunkX(y), side=k%2?1:-1; fl+=tFlower(x+side*(W*0.24), y, 2.3, k%2?'#ffd9e6':'#fff3c4'); } P.push(fl); }
   if(g>0.9){ const go=Math.min(1,(g-0.9)/0.1), gs=[[-0.45,0.32],[0.42,0.36],[0,0.56]]; let gr=""; const n=Math.max(1,Math.round(gs.length*go)); for(let i=0;i<n;i++){const s=gs[i]; gr+=`<g transform="translate(${(cx+s[0]*cr).toFixed(1)} ${(topY-cr*0.2+s[1]*cr).toFixed(1)}) scale(0.8)">${tGrapes(0,0)}</g>`;} P.push(`<g opacity="${go.toFixed(2)}">${gr}</g>`); }
   if(g>=1) P.push(`<g fill="#ffe29a">${tSpark(cx+cr*0.9,topY)}${tSpark(cx-cr*0.9,topY+cr*0.4)}</g>`);
   svg.innerHTML=P.join("");
@@ -2288,7 +2301,7 @@ function stripLatin(s){ try{ return s.normalize("NFD").replace(/[̀-ͯ]/g,""); }
 function stripAr(s){ return s.replace(/[ً-ْٰـۖ-ࣰۭ-ٖࣿٗ]/g,""); }
 function hlSnip(text,q){ let out=esc(text); try{ const qn=stripLatin(q).trim().replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); if(qn){ const re=new RegExp("("+qn+")","gi"); out=out.replace(re,"<mark>$1</mark>"); } }catch(e){} return out; }
 function openSearch(){ const m=$("searchModal"); if(!m)return; m.hidden=false; try{document.body.style.overflow="hidden";}catch(e){} const i=$("srchInput"); if(i)setTimeout(()=>{ try{i.focus();}catch(e){} },60); }
-function closeSearch(){ const m=$("searchModal"); if(m)m.hidden=true; try{document.body.style.overflow="";}catch(e){} }
+function closeSearch(){ const m=$("searchModal"); if(m)m.hidden=true; const b=$("srchSug"); if(b){b.hidden=true;b.innerHTML="";} try{document.body.style.overflow="";}catch(e){} }
 function startFrom(g){
   g=Math.max(1,Math.min(QURAN_TOTAL,g|0));
   recPos=g-1; store.set("rec_pos",recPos); store.set("rec_last",dayKeyNow());
@@ -2335,11 +2348,40 @@ async function openResult(g,btn){
   catch(e){ btn.textContent="Open"; toast("Couldn't load āyah — check your connection"); }
   btn.disabled=false;
 }
+function lev(a,b){ a=a||"";b=b||""; const m=a.length,n=b.length; if(!m)return n; if(!n)return m; const d=Array.from({length:n+1},(_,j)=>j); for(let i=1;i<=m;i++){ let prev=d[0]; d[0]=i; for(let j=1;j<=n;j++){ const t=d[j]; d[j]=Math.min(d[j]+1,d[j-1]+1,prev+(a[i-1]===b[j-1]?0:1)); prev=t; } } return d[n]; }
+function normName(s){ return stripLatin(String(s)).toLowerCase().replace(/[^a-z]/g,""); }
+function surahSuggest(q){
+  const qn=normName(q); if(qn.length<2)return [];
+  const out=[];
+  for(let i=0;i<114;i++){ const full=normName(SURAH_NAMES[i]), core=full.replace(/^al/,""); let score;
+    if(full.startsWith(qn)||core.startsWith(qn))score=0;
+    else if(full.includes(qn)||(core.length>=3&&qn.includes(core)))score=1;
+    else { const d=Math.min(lev(qn,full),lev(qn,core)); score=d<=2?1+d:99; }
+    if(score<90)out.push({n:i+1,name:SURAH_NAMES[i],score,dl:Math.abs(core.length-qn.length)});
+  }
+  out.sort((a,b)=>a.score-b.score||a.dl-b.dl);
+  return out.slice(0,5);
+}
+function renderSuggest(){
+  const inp=$("srchInput"), box=$("srchSug"); if(!inp||!box)return;
+  const raw=inp.value.trim();
+  if(!raw||/^\s*\d/.test(raw)){ box.hidden=true; box.innerHTML=""; return; }
+  const sug=surahSuggest(raw);
+  if(!sug.length){ box.hidden=true; box.innerHTML=""; return; }
+  const exact=normName(sug[0].name)===normName(raw)||normName(sug[0].name).replace(/^al/,"")===normName(raw);
+  box.hidden=false;
+  box.innerHTML=`<span class="sg-lab">${exact?"Sūrah:":"Did you mean:"}</span>`+sug.map(s=>`<button data-sug="${s.n}">${s.n} · ${esc(s.name)}</button>`).join("");
+}
+function pickSuggest(n){
+  const g=surahFirstGlobal(n); const inp=$("srchInput"); if(inp)inp.value=surahName(n);
+  const box=$("srchSug"); if(box){ box.hidden=true; box.innerHTML=""; }
+  $("srchBody").innerHTML=quickCard(`Go to Sūrah ${n} · ${surahName(n)}`, `${SURAH_AYAHS[n-1]} āyāt — start from the beginning`, g);
+}
 let srchBusy=false;
 async function runSearch(){
   const inp=$("srchInput"), body=$("srchBody"); if(!inp||!body)return;
   const raw=inp.value.trim(); if(!raw){ body.innerHTML=""; return; }
-  if(srchBusy)return; srchBusy=true; body.innerHTML=`<div class="kahf-load">Searching…</div>`;
+  if(srchBusy)return; srchBusy=true; const sb=$("srchSug"); if(sb){sb.hidden=true;sb.innerHTML="";} body.innerHTML=`<div class="kahf-load">Searching…</div>`;
   try{
     const mRef=raw.match(/^\s*(\d{1,3})\s*[:：.\-]\s*(\d{1,3})\s*$/), mNum=raw.match(/^\s*(\d{1,3})\s*$/);
     let html="";
@@ -2380,7 +2422,10 @@ $("findBtn").addEventListener("click",openSearch);
 $("searchClose").addEventListener("click",closeSearch);
 window.addEventListener("resize",()=>{ if(document.body.classList.contains("rec-view"))renderTree(); });
 $("srchGo").addEventListener("click",runSearch);
+let _sugT=null;
+$("srchInput").addEventListener("input",()=>{ clearTimeout(_sugT); _sugT=setTimeout(renderSuggest,150); });
 $("srchInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); runSearch(); } });
+$("srchSug").addEventListener("click",e=>{ const b=e.target.closest("[data-sug]"); if(b)pickSuggest(+b.dataset.sug); });
 $("srchBody").addEventListener("click",e=>{ const go=e.target.closest("[data-g]"); if(go){ startFrom(+go.dataset.g); return; } const op=e.target.closest("[data-open]"); if(op){ openResult(+op.dataset.open, op); } });
 $("recTransOn").checked=recTrans;
 $("recTransOn").addEventListener("change",e=>{ recTrans=e.target.checked; store.set("rec_trans",recTrans); if(batchItems.length)paintBatch(); toast(recTrans?"Translation shown":"Translation hidden"); });
