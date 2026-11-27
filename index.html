@@ -426,13 +426,17 @@ body.rec-view #treeSide{display:block}
 .plan-bar i{display:block;height:100%;width:0;background:var(--band);border-radius:999px;transition:width .3s}
 .plan-barlab{font-size:12px;color:var(--muted);margin-top:-6px}
 .plan-rows{display:grid;gap:9px}
-.plan-row{display:flex;align-items:center;gap:12px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 13px;cursor:pointer;text-align:left;font-family:inherit;width:100%}
-.plan-row .pr-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:14px;color:var(--band-ink);flex:0 0 auto}
-.plan-row.done{border-color:var(--band);background:color-mix(in srgb,var(--band) 10%,var(--surface))}
+.plan-row{display:flex;align-items:stretch;gap:0;border:1px solid var(--line);background:var(--surface);border-radius:12px;overflow:hidden;font-family:inherit;width:100%}
+.plan-row .pr-chk{flex:0 0 auto;border:0;background:transparent;padding:11px 10px 11px 12px;cursor:pointer;display:grid;place-items:center}
+.plan-row .pr-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:14px;color:var(--band-ink)}
+.plan-row.done{border-color:var(--band)}
 .plan-row.done .pr-check{background:var(--band);border-color:var(--band)}
-.plan-row .pr-main{display:flex;flex-direction:column;gap:1px}
+.plan-row.done{background:color-mix(in srgb,var(--band) 10%,var(--surface))}
+.plan-row .pr-open{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:10px;border:0;background:transparent;color:var(--ink);padding:11px 13px 11px 4px;cursor:pointer;text-align:left;font-family:inherit}
+.plan-row .pr-main{display:flex;flex-direction:column;gap:1px;min-width:0}
 .plan-row .pr-main b{font-size:14.5px;color:var(--ink);font-weight:600}
-.plan-row .pr-sub{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+.plan-row .pr-sub{font-size:12px;color:var(--muted);font-family:var(--f-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plan-row .pr-go{flex:0 0 auto;font-size:12.5px;font-weight:700;color:var(--band-ink);background:var(--band);border-radius:999px;padding:6px 12px}
 .plan-done{font-size:16px;line-height:1.5;color:var(--ink);text-align:center;padding:10px}
 .plan-foot{display:flex;gap:10px;margin-top:4px}
 .plan-foot button{flex:1;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px;font-size:13px;cursor:pointer;font-family:inherit}
@@ -793,7 +797,7 @@ body.rec-view #treeSide{display:block}
           <li>If you ever spot a difference, it's worth reporting to Tanzil/QuranComplex; please also let me know and I'll look into it.</li>
         </ul>
       </div>
-      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 57</p>
+      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 58</p>
     </details>
   </section>
 
@@ -1037,6 +1041,14 @@ body.rec-view #treeSide{display:block}
     <button class="kahf-x" id="planClose" aria-label="Close">✕</button>
   </div>
   <div class="kahf-body" id="planBody"></div>
+</div>
+
+<div class="kahf" id="planReaderModal" hidden>
+  <div class="kahf-head">
+    <div><div class="kahf-t" id="prTitle">Today's portion</div><div class="kahf-s" id="prSub"></div></div>
+    <button class="kahf-x" id="prClose" aria-label="Close">✕</button>
+  </div>
+  <div class="kahf-body" id="prBody"></div>
 </div>
 
 <div id="letterPop" hidden>
@@ -2488,33 +2500,66 @@ async function toggleReadRemind(on){
 }
 
 /* ---- 30-Day Qur'ān plan (finish the Qur'ān, a portion after each prayer) ---- */
-const QPAGES=604, PLAN_PRAYERS=["Fajr","Dhuhr","ʿAsr","Maghrib","ʿIshāʾ"];
+const PLAN_PRAYERS=["Fajr","Dhuhr","ʿAsr","Maghrib","ʿIshāʾ"];
 function planGet(){ return store.get("plan",null); }
 function planLogGet(){ return store.get("plan_log",{})||{}; }
 function dayNumOf(s){ const a=String(s).split("-").map(Number); return Math.floor(Date.UTC(a[0],a[1]-1,a[2])/86400000); }
 function planDayIndex(p){ return dayNumOf(dayKeyNow())-dayNumOf(p.start)+1; }
 function planPortions(p){ return p.method==="prayer"?5:1; }
-function planPPD(p){ return Math.ceil(QPAGES/p.days); }
-function planRange(p,idx){ const ppd=planPPD(p), s=(idx-1)*ppd+1, e=Math.min(QPAGES,idx*ppd); return {s,e,n:Math.max(0,e-s+1)}; }
-function juzOf(pg){ return Math.min(30,Math.max(1,Math.ceil(pg/(QPAGES/30)))); }
+function planPPD(p){ return Math.ceil(QURAN_TOTAL/p.days); }                       // āyāt per day
+function planRange(p,idx){ const ppd=planPPD(p), s=(idx-1)*ppd+1, e=Math.min(QURAN_TOTAL,idx*ppd); return {s,e,n:Math.max(0,e-s+1)}; }
+function juzOf(g){ return Math.min(30,Math.max(1,Math.ceil(g/(QURAN_TOTAL/30)))); } // juzʾ of a global āyah
+function portionLabel(ps,pe){ const si=surahInfoFor(ps), ei=surahInfoFor(pe);
+  return si.surah===ei.surah ? `${surahName(si.surah)} ${si.surah}:${si.numberInSurah}–${ei.numberInSurah}`
+    : `${surahName(si.surah)} ${si.surah}:${si.numberInSurah} → ${surahName(ei.surah)} ${ei.surah}:${ei.numberInSurah}`; }
 function planIncompleteToday(){ const p=planGet(); if(!p||!p.on)return false; const idx=planDayIndex(p); if(idx<1||idx>p.days)return false; const arr=planLogGet()[dayKeyNow()]||[]; return arr.filter(Boolean).length<planPortions(p); }
 function openPlan(){ const m=$("planModal"); if(!m)return; m.hidden=false; try{document.body.style.overflow="hidden";}catch(e){} renderPlan(); }
 function closePlan(){ const m=$("planModal"); if(m)m.hidden=true; try{document.body.style.overflow="";}catch(e){} }
 function planFooterHTML(){ return `<div class="plan-foot"><button id="planEdit">⚙︎ Change plan</button><button id="planQuit">Stop plan</button></div>`; }
 function wirePlanFooter(){ const e=$("planEdit"); if(e)e.onclick=()=>{ const pp=planGet()||{}; pp.on=false; store.set("plan",pp); renderPlan(); }; const q=$("planQuit"); if(q)q.onclick=()=>{ store.set("plan",null); store.set("plan_log",{}); writeReadRemind(); renderPlan(); toast("Plan stopped"); }; }
-function togglePlanPortion(i,portions){
+function setPlanPortion(i,portions,val){
   const log=planLogGet(), k=dayKeyNow(), arr=Array.isArray(log[k])?log[k].slice():new Array(portions).fill(false);
-  arr[i]=!arr[i]; log[k]=arr; store.set("plan_log",log);
+  arr[i]=val; log[k]=arr; store.set("plan_log",log);
   const complete=arr.filter(Boolean).length>=portions;
   renderPlan(); writeReadRemind(); renderMascot();
-  if(complete) toast("Day complete — one juzʾ closer 🌙");
+  if(val) toast(complete?"Day complete — one juzʾ closer 🌙":"Portion read ✓");
 }
+// Fetch a global āyah range (ps..pe), one request per sūrah it spans
+async function fetchRange(ps,pe){
+  const dvEd=await getDvEdition(), eds="quran-uthmani,en.sahih"+(dvEd?","+dvEd:""), out=[]; let g=ps;
+  while(g<=pe){
+    const info=surahInfoFor(g), sn=info.surah, startG=info.endGlobal-info.len+1;
+    const fromNi=g-startG+1, toG=Math.min(pe,info.endGlobal), toNi=toG-startG+1;
+    const r=await fetch(`https://api.alquran.cloud/v1/surah/${sn}/editions/${eds}`,{cache:"force-cache"});
+    if(!r.ok)throw new Error("net"); const j=await r.json(), d=(j&&j.data)||[];
+    const aA=d[0].ayahs, eA=d[1]?d[1].ayahs:[], dA=(dvEd&&d[2])?d[2].ayahs:null, nm=d[0].englishName;
+    for(let ni=fromNi; ni<=toNi; ni++){ const a=aA[ni-1]; if(!a)continue; const e=eA[ni-1], dvt=dA?dA[ni-1]:null;
+      out.push({g:startG+ni-1, ar:a.text, en:e?e.text:"", dv:(dvt&&isThaana(dvt.text))?dvt.text:null, s:nm, sn, ni}); }
+    g=toG+1;
+  }
+  return out;
+}
+async function openPlanReader(ps,pe,i,portions,label){
+  const m=$("planReaderModal"), body=$("prBody"); if(!m||!body)return;
+  m.hidden=false; try{document.body.style.overflow="hidden";}catch(e){}
+  $("prTitle").textContent=label; $("prSub").textContent="Loading…"; body.innerHTML=`<div class="kahf-load">Loading the Qur'ān…</div>`;
+  try{
+    const items=await fetchRange(ps,pe); const f=items[0], l=items[items.length-1];
+    $("prSub").textContent=`${portionLabel(ps,pe)} · ${items.length} āyāt`;
+    body.innerHTML=items.map(o=>{ const trans=recTrans?`${o.dv?`<div class="dv" lang="dv" dir="rtl">${o.dv}</div>`:""}<div class="mn">${o.en}</div>`:"";
+      return `<div class="kahf-ayah"><span class="num">${o.sn}:${o.ni}</span><div class="ar" lang="ar" dir="rtl">${qwrap(o.ar)}</div>${trans}</div>`; }).join("")+
+      `<button class="plan-start" id="prDone" style="width:100%;margin-top:6px">✓ I've read this portion</button>`;
+    body.scrollTop=0;
+    $("prDone").onclick=()=>{ setPlanPortion(i,portions,true); closePlanReader(); };
+  }catch(e){ $("prSub").textContent=""; body.innerHTML=`<div class="kahf-err">Couldn't load the Qur'ān — connect to the internet and try again.</div>`; }
+}
+function closePlanReader(){ const m=$("planReaderModal"); if(m)m.hidden=true; try{document.body.style.overflow="hidden";}catch(e){} }
 function renderPlan(){
   const body=$("planBody"); if(!body)return; const p=planGet();
   if(!p||!p.on){
     const d=dayKeyNow();
     body.innerHTML=
-      `<div class="plan-intro">Finish the whole Qur'ān with a steady daily portion. The easiest way is to read a few pages after each prayer — about <b>4 pages after every fard prayer</b> completes one <b>juzʾ</b> a day, and the whole Qur'ān in a month. 🌙</div>`+
+      `<div class="plan-intro">Finish the whole Qur'ān with a steady daily portion — read right here in the app, a little after each prayer. About <b>one juzʾ a day</b> completes the Qur'ān in a month. 🌙</div>`+
       `<label class="plan-f"><span>Finish in</span><input type="number" id="planDays" min="3" max="120" value="${p&&p.days?p.days:30}"> days</label>`+
       `<div class="plan-f"><span>How to read?</span><div class="plan-seg" id="planMethod"><button data-m="prayer" class="on">After each prayer</button><button data-m="daily">Once a day</button></div></div>`+
       `<label class="plan-f"><span>Start date</span><input type="date" id="planStart" value="${d}"></label>`+
@@ -2531,20 +2576,23 @@ function renderPlan(){
   if(idx>days){ body.innerHTML=`<div class="plan-done">🎉 Māshāʾ Allāh — your ${days}-day plan is finished!<br>${doneDays} of ${days} days completed.</div>`+planFooterHTML(); wirePlanFooter(); return; }
   if(idx<1){ body.innerHTML=`<div class="plan-done">Your plan begins on <b>${p.start}</b>.</div>`+planFooterHTML(); wirePlanFooter(); return; }
   const {s,e,n}=planRange(p,idx), todayArr=log[dayKeyNow()]||[], chunk=Math.ceil(n/portions);
-  let rows="";
-  for(let i=0;i<portions;i++){ const ps=s+i*chunk, pe=Math.min(e,ps+chunk-1); if(ps>e)break; const done=!!todayArr[i];
-    const label=portions===5?`After ${PLAN_PRAYERS[i]}`:"Today's portion";
-    rows+=`<button class="plan-row${done?' done':''}" data-i="${i}"><span class="pr-check">${done?'✓':''}</span><span class="pr-main"><b>${label}</b><span class="pr-sub">pages ${ps}–${pe} · ${pe-ps+1} page${pe-ps+1===1?'':'s'}</span></span></button>`;
-  }
+  const parts=[];
+  for(let i=0;i<portions;i++){ const ps=s+i*chunk, pe=Math.min(e,ps+chunk-1); if(ps>e)break; parts.push({i,ps,pe,done:!!todayArr[i]}); }
+  const rows=parts.map(pt=>{ const label=portions===5?`After ${PLAN_PRAYERS[pt.i]}`:"Today's portion";
+    return `<div class="plan-row${pt.done?' done':''}">`+
+      `<button class="pr-chk" data-tog="${pt.i}" aria-label="Mark read"><span class="pr-check">${pt.done?'✓':''}</span></button>`+
+      `<button class="pr-open" data-read="${pt.i}" data-ps="${pt.ps}" data-pe="${pt.pe}"><span class="pr-main"><b>${label}</b><span class="pr-sub">${portionLabel(pt.ps,pt.pe)} · ${pt.pe-pt.ps+1} āyāt</span></span><span class="pr-go">📖 Read</span></button>`+
+    `</div>`; }).join("");
   const todayCount=todayArr.filter(Boolean).length;
   body.innerHTML=
-    `<div class="plan-top"><div class="plan-daynum">Day ${idx} <span>of ${days}</span></div><div class="plan-juz">Juzʾ ${juzOf(s)}${juzOf(e)!==juzOf(s)?'–'+juzOf(e):''} · pages ${s}–${e}</div></div>`+
+    `<div class="plan-top"><div class="plan-daynum">Day ${idx} <span>of ${days}</span></div><div class="plan-juz">Juzʾ ${juzOf(s)}${juzOf(e)!==juzOf(s)?'–'+juzOf(e):''} · ${n} āyāt today</div></div>`+
     `<div class="plan-bar"><i style="width:${overallPct}%"></i></div>`+
     `<div class="plan-barlab">${doneDays} of ${days} days complete · ${overallPct}%</div>`+
     `<div class="plan-rows">${rows}</div>`+
-    `<div class="plan-tiptext">${todayCount>=portions?"Today's portion complete — māshāʾAllāh 🌙":"Tap each part as you finish it. Reading from your own mushaf? Just check them off here."}</div>`+
+    `<div class="plan-tiptext">${todayCount>=portions?"Today's portion complete — māshāʾAllāh 🌙":"Tap <b>📖 Read</b> to read each part in the app. Reading from your own mushaf? Just tick it off."}</div>`+
     planFooterHTML();
-  body.querySelectorAll(".plan-row").forEach(b=>b.onclick=()=>togglePlanPortion(+b.dataset.i,portions));
+  body.querySelectorAll(".pr-chk").forEach(b=>b.onclick=()=>{ const i=+b.dataset.tog; const done=(planLogGet()[dayKeyNow()]||[])[i]; setPlanPortion(i,portions,!done); });
+  body.querySelectorAll(".pr-open").forEach(b=>b.onclick=()=>{ const i=+b.dataset.read; const label=portions===5?`After ${PLAN_PRAYERS[i]}`:"Today's portion"; openPlanReader(+b.dataset.ps,+b.dataset.pe,i,portions,label); });
   wirePlanFooter();
 }
 
@@ -2721,6 +2769,7 @@ $("searchBtn").addEventListener("click",openSearch);
 $("findBtn").addEventListener("click",openSearch);
 $("planBtn").addEventListener("click",openPlan);
 $("planClose").addEventListener("click",closePlan);
+$("prClose").addEventListener("click",closePlanReader);
 $("shareBtn").addEventListener("click",shareApp);
 $("shareBtn2").addEventListener("click",shareApp);
 (function(){ const sui=$("shareUrlInput"); if(!sui)return; sui.value=(store.get("share_url","")||"")||shareUrl(); sui.addEventListener("change",e=>{ store.set("share_url",(e.target.value||"").trim()); toast("Share link saved"); }); })();
