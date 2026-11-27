@@ -436,7 +436,7 @@ body.rec-view #treeSide{display:block}
 .plan-done{font-size:16px;line-height:1.5;color:var(--ink);text-align:center;padding:10px}
 .plan-foot{display:flex;gap:10px;margin-top:4px}
 .plan-foot button{flex:1;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px;font-size:13px;cursor:pointer;font-family:inherit}
-.qw{cursor:pointer;border-radius:5px;-webkit-tap-highlight-color:transparent}
+.qw{cursor:pointer;border-radius:5px;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .qw.qw-lit{background:color-mix(in srgb,var(--brass) 28%,transparent)}
 #letterPop{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.5);display:grid;place-items:end center}
 #letterPop .lp-card{background:var(--surface);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 30px rgba(0,0,0,.3);position:relative;max-height:82vh;overflow:auto}
@@ -793,7 +793,7 @@ body.rec-view #treeSide{display:block}
           <li>If you ever spot a difference, it's worth reporting to Tanzil/QuranComplex; please also let me know and I'll look into it.</li>
         </ul>
       </div>
-      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 56</p>
+      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 57</p>
     </details>
   </section>
 
@@ -1046,7 +1046,7 @@ body.rec-view #treeSide{display:block}
     <div class="lp-translit" id="lpTranslit"></div>
     <div class="lp-letters" id="lpLetters"></div>
     <button class="lp-say" id="lpSay" hidden>🔊 Sound it out</button>
-    <div class="lp-note">Each letter on its own, read right to left. Long-press any word to break it down.</div>
+    <div class="lp-note">Each letter on its own, read right to left. Tap a word to break it down (long-press in Book mode).</div>
   </div>
 </div>
 
@@ -2215,13 +2215,13 @@ function paintBatch(){
     list.innerHTML=`<div class="rec-book" dir="rtl" lang="ar">`+
       batchItems.map((o,i)=>{ const g=batchStart+i, read=batchRead.has(g);
         return `<span class="rb-ayah${read?' read':''}" data-g="${g}">${qwrap(o.ar)}<span class="rb-num">${toArabicNum(o.ni)}</span> </span>`;
-      }).join("")+`</div><div class="rec-booktip">Tap an āyah to mark it read</div>`;
+      }).join("")+`</div><div class="rec-booktip">Tap an āyah to mark it read · long-press a word to read it letter by letter 🔤</div>`;
     list.querySelectorAll(".rb-ayah").forEach(s=>s.onclick=()=>markAyahRead(+s.dataset.g));
   } else {
     list.innerHTML=batchItems.map((o,i)=>{ const g=batchStart+i, read=batchRead.has(g);
       const trans = recTrans ? `${o.dv?`<div class="dv" lang="dv" dir="rtl">${o.dv}</div>`:""}<div class="mn">${o.en}</div>` : "";
       return `<div class="rec-ayah${read?' read':''}"><div class="rec-ref">${o.s} · ${o.sn}:${o.ni}</div><div class="ar" lang="ar" dir="rtl">${qwrap(o.ar)}</div>${trans}<button class="rec-read" data-g="${g}">${read?"✓ Read":"Mark read"}</button></div>`;
-    }).join("");
+    }).join("")+`<div class="rec-booktip">🔤 Can't read a word? Tap it to see the letters.</div>`;
     list.querySelectorAll(".rec-read").forEach(b=>b.onclick=()=>markAyahRead(+b.dataset.g));
   }
   updateStyleSeg();
@@ -2729,7 +2729,11 @@ document.addEventListener("pointerdown",e=>{ const w=e.target.closest(".qw"); if
 document.addEventListener("pointerup",()=>{ if(_lpTimer){ clearTimeout(_lpTimer); _lpTimer=null; } });
 document.addEventListener("pointermove",()=>{ if(_lpTimer){ clearTimeout(_lpTimer); _lpTimer=null; if(_lpEl)_lpEl.classList.remove("qw-lit"); } });
 document.addEventListener("pointercancel",()=>{ if(_lpTimer){ clearTimeout(_lpTimer); _lpTimer=null; } });
-document.addEventListener("click",e=>{ if(_lpSuppress){ _lpSuppress=false; e.stopPropagation(); e.preventDefault(); } },true);
+document.addEventListener("click",e=>{
+  if(_lpSuppress){ _lpSuppress=false; e.stopPropagation(); e.preventDefault(); return; }
+  const w=e.target.closest(".qw");
+  if(w && !w.closest(".rb-ayah")){ e.stopPropagation(); e.preventDefault(); openLetters(w.textContent); } // tap a word (except Book mode, where tap marks read)
+},true);
 $("lpClose").addEventListener("click",closeLetters);
 $("letterPop").addEventListener("click",e=>{ if(e.target.id==="letterPop")closeLetters(); });
 $("searchClose").addEventListener("click",closeSearch);
