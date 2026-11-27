@@ -247,8 +247,8 @@ details.tune .body{padding:0 0 14px;display:grid;gap:12px}
 
 /* ---- floating counter ---- */
 .fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:15;
-  width:64px;height:64px;border-radius:50%;border:0;background:var(--band);color:var(--band-ink);
-  box-shadow:0 6px 20px rgba(0,0,0,.3);display:grid;place-items:center;padding:0;touch-action:manipulation}
+  width:64px;height:64px;border-radius:50%;border:2px solid currentColor;background:transparent;color:var(--ink);
+  box-shadow:none;filter:drop-shadow(0 2px 5px rgba(0,0,0,.3));display:grid;place-items:center;padding:0;touch-action:manipulation}
 .fab .fc{font-family:var(--f-mono);font-size:21px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
 .fab .fl{font-size:8px;letter-spacing:.12em;text-transform:uppercase;opacity:.8;margin-top:2px}
 .fab.pop{animation:pop .18s ease}
@@ -405,9 +405,47 @@ body.rec-view #treeSide{display:block}
 .srch-sug button{border:1px solid var(--band);background:color-mix(in srgb,var(--band) 10%,var(--surface));color:var(--ink);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
 .srch-sug button:active{background:color-mix(in srgb,var(--band) 22%,var(--surface))}
 .srch .kahf-body{display:flex;flex-direction:column;gap:12px;align-items:stretch;justify-content:flex-start}
+.plan .kahf-body{gap:14px;padding-top:12px}
+.plan-intro,.plan-note,.plan-tiptext{font-size:13.5px;line-height:1.55;color:var(--muted)}
+.plan-intro{color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 13px}
+.plan-intro b{color:var(--brass)}
+.plan-f{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink);flex-wrap:wrap}
+.plan-f>span{min-width:92px}
+.plan-f input[type=number]{width:70px}
+.plan-f input{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px 11px;font-size:15px;font-family:inherit}
+.plan-seg{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;flex:1;min-width:200px}
+.plan-seg button{flex:1;border:0;background:transparent;color:var(--muted);padding:9px 6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.plan-seg button.on{background:var(--band);color:var(--band-ink)}
+.plan-start{border:0;background:var(--band);color:var(--band-ink);border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+.plan-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.plan-daynum{font-family:var(--f-display);font-size:26px;color:var(--ink)}
+.plan-daynum span{font-size:15px;color:var(--muted)}
+.plan-juz{font-size:13px;color:var(--brass);font-weight:600;font-family:var(--f-mono)}
+.plan-bar{height:9px;border-radius:999px;background:var(--line);overflow:hidden}
+.plan-bar i{display:block;height:100%;width:0;background:var(--band);border-radius:999px;transition:width .3s}
+.plan-barlab{font-size:12px;color:var(--muted);margin-top:-6px}
+.plan-rows{display:grid;gap:9px}
+.plan-row{display:flex;align-items:center;gap:12px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 13px;cursor:pointer;text-align:left;font-family:inherit;width:100%}
+.plan-row .pr-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:14px;color:var(--band-ink);flex:0 0 auto}
+.plan-row.done{border-color:var(--band);background:color-mix(in srgb,var(--band) 10%,var(--surface))}
+.plan-row.done .pr-check{background:var(--band);border-color:var(--band)}
+.plan-row .pr-main{display:flex;flex-direction:column;gap:1px}
+.plan-row .pr-main b{font-size:14.5px;color:var(--ink);font-weight:600}
+.plan-row .pr-sub{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+.plan-done{font-size:16px;line-height:1.5;color:var(--ink);text-align:center;padding:10px}
+.plan-foot{display:flex;gap:10px;margin-top:4px}
+.plan-foot button{flex:1;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px;font-size:13px;cursor:pointer;font-family:inherit}
 .srch .srch-res,.srch .srch-quick{align-content:start}
 .rec-ref{font-size:12px;font-weight:600;color:var(--brass)}
 .rec-ayah .ar{font-family:var(--f-ar);font-size:25px;line-height:1.95;direction:rtl;unicode-bidi:isolate;text-align:right;color:var(--ink)}
+.rec-style{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:12px 0 2px;background:var(--surface)}
+.rec-style button{flex:1;border:0;background:transparent;color:var(--muted);padding:9px 6px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.rec-style button.on{background:var(--band);color:var(--band-ink)}
+.rec-book{font-family:var(--f-ar);font-size:27px;line-height:2.15;direction:rtl;text-align:justify;text-align-last:right;color:var(--ink);padding:8px 2px 2px}
+.rb-ayah{cursor:pointer;border-radius:6px;padding:1px 2px;transition:background .15s}
+.rb-ayah.read{background:color-mix(in srgb,var(--band) 17%,transparent)}
+.rb-num{font-family:var(--f-mono);font-size:12px;color:var(--brass);border:1.5px solid var(--brass);border-radius:50%;width:1.9em;height:1.9em;line-height:1;display:inline-grid;place-items:center;margin:0 5px;vertical-align:middle;unicode-bidi:isolate}
+.rec-booktip{font-size:12px;color:var(--muted);text-align:center;margin-top:12px}
 .rec-ayah .mn{font-size:14px;color:var(--ink);opacity:.92}
 .rec-ayah.read{opacity:.62}
 .rec-read{justify-self:start;margin-top:2px;padding:5px 13px;font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--on);border-radius:999px;cursor:pointer}
@@ -478,6 +516,15 @@ body.rec-view #treeSide{display:block}
 .ramadan .rm-ttl{font-family:var(--f-display);font-size:23px;margin:2px 0 4px}
 .ramadan .rm-sub{font-size:13px;opacity:.95;margin-bottom:2px}
 .ramadan .rm-count{font-family:var(--f-display);font-size:33px;line-height:1.05;margin:5px 0 3px}
+.ramadan.cd{padding:0}
+.ramadan.cd::after{display:none}
+.ram-head{width:100%;display:flex;align-items:center;gap:10px;background:transparent;border:0;color:#fff;padding:13px 15px;cursor:pointer;font-size:15px;text-align:left;font-family:inherit}
+.ram-head .rh-emoji{font-size:20px;line-height:1}
+.ram-head .rh-main{flex:1;line-height:1.3}
+.ram-head .rh-main b{font-weight:700}
+.ram-head .rh-chev{opacity:.85;font-size:13px}
+.ram-body{padding:0 15px 15px}
+.ramadan.cd .rm-count{font-size:26px;margin:2px 0 4px}
 .ramadan .rm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:11px 0 2px}
 .ramadan .rm-tile{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:8px 10px}
 .ramadan .rm-tile .t-k{font-size:10px;letter-spacing:.07em;text-transform:uppercase;opacity:.85}
@@ -579,6 +626,12 @@ body.rec-view #treeSide{display:block}
         <div class="rec-motiv" id="recMotiv"></div>
       </div>
       <button class="find-btn" id="findBtn">🔍 Search &amp; read any sūrah or āyah</button>
+      <button class="find-btn" id="planBtn">📅 30-Day Qur'ān plan — finish in a month</button>
+      <div class="rec-style" id="recStyleSeg" role="tablist" aria-label="Reading style">
+        <button data-style="trans">Āyah + meaning</button>
+        <button data-style="plain">Āyah only</button>
+        <button data-style="book">Book</button>
+      </div>
       <div class="rec-list" id="recList"></div>
       <div class="rec-actions">
         <button class="btn-brass" id="recMark">✓ Mark as read</button>
@@ -686,6 +739,14 @@ body.rec-view #treeSide{display:block}
         <input type="checkbox" id="recTransOn" style="width:auto">Show translation in Qur'ān recitation
       </label>
 
+      <label style="text-transform:none;letter-spacing:0;flex-direction:row;align-items:center;gap:10px;display:flex;font-size:14px;color:var(--ink)">
+        <input type="checkbox" id="readRemindOn" style="width:auto">Daily reminder: “Did you read today's Qur'ān?”
+      </label>
+      <label style="text-transform:none;letter-spacing:0;flex-direction:row;align-items:center;gap:10px;display:flex;font-size:14px;color:var(--ink)">
+        Remind me at
+        <input type="time" id="readRemindTime" style="width:auto;flex:0 0 auto">
+      </label>
+
       <div class="actions">
         <button id="test">Play test sound</button>
         <p class="note" style="flex:1;min-width:180px">Tap a bell beside a prayer to silence it. Reminders ring only while this page is open.</p>
@@ -699,7 +760,7 @@ body.rec-view #treeSide{display:block}
           <li><b>Delivered by:</b> the AlQuran Cloud API (alquran.cloud).</li>
         </ul>
       </div>
-      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 49</p>
+      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 52</p>
     </details>
   </section>
 
@@ -935,6 +996,14 @@ body.rec-view #treeSide{display:block}
   <div class="srch-hint">Type words to find them in the Qur'ān, or a reference like <b>2:255</b>, or a sūrah name or number.</div>
   <div class="srch-sug" id="srchSug" hidden></div>
   <div class="kahf-body" id="srchBody"></div>
+</div>
+
+<div class="kahf srch plan" id="planModal" hidden>
+  <div class="kahf-head">
+    <div><div class="kahf-t">30-Day Qur'ān Plan</div><div class="kahf-s">Finish the Qur'ān, a little after each prayer</div></div>
+    <button class="kahf-x" id="planClose" aria-label="Close">✕</button>
+  </div>
+  <div class="kahf-body" id="planBody"></div>
 </div>
 
 <div class="celebrate" id="celebrate" hidden>
@@ -1969,6 +2038,7 @@ let batchStart=0, batchEnd=0, batchItems=[]; const batchRead=new Set();
 let recPrev=store.get("rec_prev",null); // position before the last "mark read", for undo
 let recPartial=store.get("rec_partial",null); // {start, read:[...]} — per-āyah marks not yet completed, survives refresh
 let recTrans=store.get("rec_trans",true); // show translation in recitation
+let recStyle=store.get("rec_style","cards"); // "cards" (separate āyāt) or "book" (continuous)
 // Progress counts EVERY āyah marked read (including partial ones in the current batch).
 function updateRecProg(){
   const done=Math.min(QURAN_TOTAL, recPos + (recPos<QURAN_TOTAL ? batchRead.size : 0));
@@ -2073,16 +2143,37 @@ async function renderRecite(force){
   paintBatch();
 }
 let recScrollTop=false;
+function toArabicNum(n){ return String(n).replace(/[0-9]/g,d=>"٠١٢٣٤٥٦٧٨٩"[+d]); }
+function updateStyleSeg(){
+  const seg=$("recStyleSeg"); if(!seg)return;
+  const active = recStyle==="book" ? "book" : (recTrans?"trans":"plain");
+  seg.querySelectorAll("button").forEach(b=>b.classList.toggle("on", b.dataset.style===active));
+}
+function setRecStyle(mode){
+  if(mode==="book"){ recStyle="book"; }
+  else { recStyle="cards"; recTrans=(mode==="trans"); store.set("rec_trans",recTrans); const cb=$("recTransOn"); if(cb)cb.checked=recTrans; }
+  store.set("rec_style",recStyle);
+  updateStyleSeg(); if(batchItems.length)paintBatch();
+}
 function paintBatch(){
   const list=$("recList"); if(!list)return;
-  list.innerHTML=batchItems.map((o,i)=>{ const g=batchStart+i, read=batchRead.has(g);
-    const trans = recTrans ? `${o.dv?`<div class="dv" lang="dv" dir="rtl">${o.dv}</div>`:""}<div class="mn">${o.en}</div>` : "";
-    return `<div class="rec-ayah${read?' read':''}"><div class="rec-ref">${o.s} · ${o.sn}:${o.ni}</div><div class="ar" lang="ar" dir="rtl">${o.ar}</div>${trans}<button class="rec-read" data-g="${g}">${read?"✓ Read":"Mark read"}</button></div>`;
-  }).join("");
-  list.querySelectorAll(".rec-read").forEach(b=>b.onclick=()=>markAyahRead(+b.dataset.g));
+  if(recStyle==="book"){
+    list.innerHTML=`<div class="rec-book" dir="rtl" lang="ar">`+
+      batchItems.map((o,i)=>{ const g=batchStart+i, read=batchRead.has(g);
+        return `<span class="rb-ayah${read?' read':''}" data-g="${g}">${o.ar}<span class="rb-num">${toArabicNum(o.ni)}</span> </span>`;
+      }).join("")+`</div><div class="rec-booktip">Tap an āyah to mark it read</div>`;
+    list.querySelectorAll(".rb-ayah").forEach(s=>s.onclick=()=>markAyahRead(+s.dataset.g));
+  } else {
+    list.innerHTML=batchItems.map((o,i)=>{ const g=batchStart+i, read=batchRead.has(g);
+      const trans = recTrans ? `${o.dv?`<div class="dv" lang="dv" dir="rtl">${o.dv}</div>`:""}<div class="mn">${o.en}</div>` : "";
+      return `<div class="rec-ayah${read?' read':''}"><div class="rec-ref">${o.s} · ${o.sn}:${o.ni}</div><div class="ar" lang="ar" dir="rtl">${o.ar}</div>${trans}<button class="rec-read" data-g="${g}">${read?"✓ Read":"Mark read"}</button></div>`;
+    }).join("");
+    list.querySelectorAll(".rec-read").forEach(b=>b.onclick=()=>markAyahRead(+b.dataset.g));
+  }
+  updateStyleSeg();
   const mark=$("recMark"); if(mark) mark.textContent = batchRead.size>=batchItems.length && batchItems.length ? "✓ Finish today's reading" : "✓ Mark all as read";
   updateRecProg();
-  if(recScrollTop){ recScrollTop=false; const first=list.querySelector(".rec-ayah"); if(first){ requestAnimationFrame(()=>{ try{ first.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){} }); } }
+  if(recScrollTop){ recScrollTop=false; const first=list.querySelector(".rec-ayah,.rb-ayah"); if(first){ requestAnimationFrame(()=>{ try{ first.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){} }); } }
 }
 function saverecPartial(){ recPartial = batchRead.size ? {start:batchStart, read:[...batchRead]} : null; store.set("rec_partial", recPartial); }
 function markAyahRead(g){
@@ -2124,23 +2215,32 @@ function todaySpecial(){
   ]};
   return null;
 }
+let ramOpen=false;
 function renderRamadan(){
   const el=$("ramadanCard"); if(!el)return;
   const info=ramadanInfo();
   if(info.state==="before"){
-    if(info.daysUntil==null || info.daysUntil>90){ el.hidden=true; el.classList.remove("soon"); return; }
-    el.hidden=false; const soon=info.daysUntil<=10; el.classList.toggle("soon",soon);
+    if(info.daysUntil==null || info.daysUntil>90){ el.hidden=true; el.className="ramadan"; return; }
+    el.hidden=false; const soon=info.daysUntil<=10;
+    el.className="ramadan cd"+(soon?" soon":"")+(ramOpen?"":" mini");
     let dateStr=""; try{ dateStr=info.startD.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"}); }catch(e){}
+    const days=`${info.daysUntil} day${info.daysUntil===1?"":"s"}`;
     el.innerHTML=
-      `<div class="rm-k">Ramadan ${info.year}</div>`+
-      `<div class="rm-ttl">${soon?"Ramadan is almost here! 🌙":"Counting down to Ramadan"}</div>`+
-      `<div class="rm-count">${info.daysUntil} day${info.daysUntil===1?"":"s"} to go</div>`+
-      `<div class="rm-sub">Expected to begin around <b>${dateStr}</b> · subject to the moon sighting</div>`+
-      `<ul><li>Settle any missed fasts from last year</li><li>Build your Qur'ān habit now — aim to complete it in Ramadan</li><li>Increase in duʿāʾ, charity and night prayer</li></ul>`;
+      `<button class="ram-head" id="ramToggle" aria-expanded="${ramOpen}">`+
+        `<span class="rh-emoji">🌙</span>`+
+        `<span class="rh-main"><b>Ramadan ${info.year}</b> · ${soon?"almost here!":days+" to go"}</span>`+
+        `<span class="rh-chev">${ramOpen?"▴":"▾"}</span>`+
+      `</button>`+
+      (ramOpen?`<div class="ram-body">`+
+        `<div class="rm-count">${days} to go</div>`+
+        `<div class="rm-sub">Expected to begin around <b>${dateStr}</b> · subject to the moon sighting</div>`+
+        `<ul><li>Settle any missed fasts from last year</li><li>Build your Qur'ān habit now — aim to complete it in Ramadan</li><li>Increase in duʿāʾ, charity and night prayer</li></ul>`+
+      `</div>`:``);
+    const tg=$("ramToggle"); if(tg)tg.onclick=()=>{ ramOpen=!ramOpen; renderRamadan(); };
     return;
   }
   if(info.state==="in"){
-    el.hidden=false; el.classList.remove("soon");
+    el.hidden=false; el.className="ramadan";
     const tt=todayTimes||{}, suhur=fmtTime(tt.fajr,P.tz), iftar=fmtTime(tt.maghrib,P.tz);
     const day=info.day, last10=day>=21, odd=[21,23,25,27,29].indexOf(day)>=0;
     const left=QURAN_TOTAL-recPos;
@@ -2275,12 +2375,18 @@ function updateKahfRemind(){
   const b=$("spRemind"); if(b){ const ready=("Notification" in window)&&Notification.permission==="granted"; const on=friday&&kahfRemindOn();
     b.classList.toggle("on",on&&ready); b.textContent=on?(ready?"🔔 Reminder on":"🔔 Enable pop-up"):"🔔 Remind me before Maghrib"; }
 }
-function fireKahfNotif(msg){
-  try{ if(("Notification" in window)&&Notification.permission==="granted"){ const opt={ body:msg, tag:"kahf-reminder", icon:"icon-192.png", badge:"icon-192.png" };
-    if(navigator.serviceWorker&&navigator.serviceWorker.ready){ navigator.serviceWorker.ready.then(r=>r.showNotification("Sūrat al-Kahf",opt)).catch(()=>{ try{new Notification("Sūrat al-Kahf",opt);}catch(_){}}); }
-    else { try{ new Notification("Sūrat al-Kahf",opt); }catch(_){}} } }catch(e){}
-  toast(msg);
+// Show a system notification robustly: prefer a service-worker registration (required on
+// Android), fall back to the Notification constructor; never block on serviceWorker.ready.
+function notify(title,opt){
+  try{
+    if(!("Notification" in window) || Notification.permission!=="granted") return;
+    const plain=()=>{ try{ new Notification(title,opt); }catch(_){} };
+    if(navigator.serviceWorker && navigator.serviceWorker.getRegistration){
+      navigator.serviceWorker.getRegistration().then(reg=>{ if(reg&&reg.showNotification) reg.showNotification(title,opt); else plain(); }).catch(plain);
+    } else plain();
+  }catch(e){}
 }
+function fireKahfNotif(msg){ notify("Sūrat al-Kahf",{body:msg,tag:"kahf-reminder",icon:"icon-192.png",badge:"icon-192.png"}); toast(msg); }
 function kahfRemindTick(){
   if(weekdayIn(P.tz)!=="Friday" || !kahfRemindOn() || kahfDone())return;
   const info=kahfTargets(); if(!info)return; const now=Date.now(), dk=dayKeyNow();
@@ -2293,6 +2399,91 @@ async function toggleKahfRemind(){
   store.set("kahf_remind_on",turningOn); updateKahfRemind();
   if(turningOn){ const ok=("Notification" in window)&&Notification.permission==="granted"; toast(ok?"Reminder on — I'll nudge you before Maghrib":"Reminder set — allow notifications for a pop-up"); }
   else toast("Reminder off");
+}
+/* ---- Daily "Did you read today's Qur'ān?" reminder (repeats every day) ---- */
+let readRemindOn=store.get("read_remind_on",true);
+let readRemindTime=store.get("read_remind_time","20:00");
+function readTargetToday(){ const [h,m]=(readRemindTime||"20:00").split(":").map(Number); const d=new Date(); d.setHours(h||20,m||0,0,0); return {ts:d.getTime(),h:isNaN(h)?20:h,m:isNaN(m)?0:m}; }
+function readToday(){ const p=store.get("plan",null); if(p&&p.on) return !planIncompleteToday(); return store.get("rec_last",null)===dayKeyNow(); }
+function writeReadRemind(){ const t=readTargetToday(); store.set("read_remind",{on:!!readRemindOn,hour:t.h,minute:t.m}); try{ window.dispatchEvent(new Event("salah:changed")); }catch(e){} }
+function fireReadNotif(){
+  let msg="Did you read today's Qur'ān? 📖 Tap to continue.";
+  const p=store.get("plan",null);
+  if(p&&p.on&&planIncompleteToday()){ const idx=Math.max(1,planDayIndex(p)); msg=`Qur'ān plan · Day ${idx}: you haven't finished today's portion yet 📖`; }
+  notify("Daily Reminder",{body:msg,tag:"read-reminder",icon:"icon-192.png",badge:"icon-192.png"}); toast(msg);
+}
+function readRemindTick(){
+  if(!readRemindOn||readToday())return;
+  const t=readTargetToday(), now=Date.now(), fk="read_fired_"+dayKeyNow();
+  if(now>=t.ts && now<t.ts+3*3600000 && !store.get(fk,false)){ store.set(fk,true); fireReadNotif(); }
+}
+async function toggleReadRemind(on){
+  readRemindOn=on; store.set("read_remind_on",on);
+  if(on && ("Notification" in window) && Notification.permission==="default"){ try{ await Notification.requestPermission(); }catch(e){} }
+  writeReadRemind();
+  const ok=("Notification" in window)&&Notification.permission==="granted";
+  toast(on?(ok?"Daily reading reminder on":"Reminder on — allow notifications for a pop-up"):"Daily reading reminder off");
+}
+
+/* ---- 30-Day Qur'ān plan (finish the Qur'ān, a portion after each prayer) ---- */
+const QPAGES=604, PLAN_PRAYERS=["Fajr","Dhuhr","ʿAsr","Maghrib","ʿIshāʾ"];
+function planGet(){ return store.get("plan",null); }
+function planLogGet(){ return store.get("plan_log",{})||{}; }
+function dayNumOf(s){ const a=String(s).split("-").map(Number); return Math.floor(Date.UTC(a[0],a[1]-1,a[2])/86400000); }
+function planDayIndex(p){ return dayNumOf(dayKeyNow())-dayNumOf(p.start)+1; }
+function planPortions(p){ return p.method==="prayer"?5:1; }
+function planPPD(p){ return Math.ceil(QPAGES/p.days); }
+function planRange(p,idx){ const ppd=planPPD(p), s=(idx-1)*ppd+1, e=Math.min(QPAGES,idx*ppd); return {s,e,n:Math.max(0,e-s+1)}; }
+function juzOf(pg){ return Math.min(30,Math.max(1,Math.ceil(pg/(QPAGES/30)))); }
+function planIncompleteToday(){ const p=planGet(); if(!p||!p.on)return false; const idx=planDayIndex(p); if(idx<1||idx>p.days)return false; const arr=planLogGet()[dayKeyNow()]||[]; return arr.filter(Boolean).length<planPortions(p); }
+function openPlan(){ const m=$("planModal"); if(!m)return; m.hidden=false; try{document.body.style.overflow="hidden";}catch(e){} renderPlan(); }
+function closePlan(){ const m=$("planModal"); if(m)m.hidden=true; try{document.body.style.overflow="";}catch(e){} }
+function planFooterHTML(){ return `<div class="plan-foot"><button id="planEdit">⚙︎ Change plan</button><button id="planQuit">Stop plan</button></div>`; }
+function wirePlanFooter(){ const e=$("planEdit"); if(e)e.onclick=()=>{ const pp=planGet()||{}; pp.on=false; store.set("plan",pp); renderPlan(); }; const q=$("planQuit"); if(q)q.onclick=()=>{ store.set("plan",null); store.set("plan_log",{}); writeReadRemind(); renderPlan(); toast("Plan stopped"); }; }
+function togglePlanPortion(i,portions){
+  const log=planLogGet(), k=dayKeyNow(), arr=Array.isArray(log[k])?log[k].slice():new Array(portions).fill(false);
+  arr[i]=!arr[i]; log[k]=arr; store.set("plan_log",log);
+  const complete=arr.filter(Boolean).length>=portions;
+  renderPlan(); writeReadRemind();
+  if(complete) toast("Day complete — one juzʾ closer 🌙");
+}
+function renderPlan(){
+  const body=$("planBody"); if(!body)return; const p=planGet();
+  if(!p||!p.on){
+    const d=dayKeyNow();
+    body.innerHTML=
+      `<div class="plan-intro">Finish the whole Qur'ān with a steady daily portion. The easiest way is to read a few pages after each prayer — about <b>4 pages after every fard prayer</b> completes one <b>juzʾ</b> a day, and the whole Qur'ān in a month. 🌙</div>`+
+      `<label class="plan-f"><span>Finish in</span><input type="number" id="planDays" min="3" max="120" value="${p&&p.days?p.days:30}"> days</label>`+
+      `<div class="plan-f"><span>How to read?</span><div class="plan-seg" id="planMethod"><button data-m="prayer" class="on">After each prayer</button><button data-m="daily">Once a day</button></div></div>`+
+      `<label class="plan-f"><span>Start date</span><input type="date" id="planStart" value="${d}"></label>`+
+      `<button class="plan-start" id="planStartBtn">Start my plan</button>`+
+      `<div class="plan-note">Perfect for Ramadan — but you can use it any time. If you miss the day's portion, the app reminds you.</div>`;
+    let method="prayer";
+    body.querySelectorAll("#planMethod button").forEach(b=>b.onclick=()=>{ method=b.dataset.m; body.querySelectorAll("#planMethod button").forEach(x=>x.classList.toggle("on",x===b)); });
+    $("planStartBtn").onclick=()=>{ const days=Math.max(3,Math.min(120,parseInt($("planDays").value)||30)); const start=$("planStart").value||d; store.set("plan",{on:true,days,method,start}); store.set("plan_log",{}); writeReadRemind(); renderPlan(); toast("Plan started — may Allah make it easy 🤍"); };
+    return;
+  }
+  const idx=planDayIndex(p), days=p.days, portions=planPortions(p), log=planLogGet();
+  let doneDays=0; for(const kk in log){ if(Array.isArray(log[kk])&&log[kk].filter(Boolean).length>=portions)doneDays++; }
+  const overallPct=Math.min(100,Math.round(doneDays/days*100));
+  if(idx>days){ body.innerHTML=`<div class="plan-done">🎉 Māshāʾ Allāh — your ${days}-day plan is finished!<br>${doneDays} of ${days} days completed.</div>`+planFooterHTML(); wirePlanFooter(); return; }
+  if(idx<1){ body.innerHTML=`<div class="plan-done">Your plan begins on <b>${p.start}</b>.</div>`+planFooterHTML(); wirePlanFooter(); return; }
+  const {s,e,n}=planRange(p,idx), todayArr=log[dayKeyNow()]||[], chunk=Math.ceil(n/portions);
+  let rows="";
+  for(let i=0;i<portions;i++){ const ps=s+i*chunk, pe=Math.min(e,ps+chunk-1); if(ps>e)break; const done=!!todayArr[i];
+    const label=portions===5?`After ${PLAN_PRAYERS[i]}`:"Today's portion";
+    rows+=`<button class="plan-row${done?' done':''}" data-i="${i}"><span class="pr-check">${done?'✓':''}</span><span class="pr-main"><b>${label}</b><span class="pr-sub">pages ${ps}–${pe} · ${pe-ps+1} page${pe-ps+1===1?'':'s'}</span></span></button>`;
+  }
+  const todayCount=todayArr.filter(Boolean).length;
+  body.innerHTML=
+    `<div class="plan-top"><div class="plan-daynum">Day ${idx} <span>of ${days}</span></div><div class="plan-juz">Juzʾ ${juzOf(s)}${juzOf(e)!==juzOf(s)?'–'+juzOf(e):''} · pages ${s}–${e}</div></div>`+
+    `<div class="plan-bar"><i style="width:${overallPct}%"></i></div>`+
+    `<div class="plan-barlab">${doneDays} of ${days} days complete · ${overallPct}%</div>`+
+    `<div class="plan-rows">${rows}</div>`+
+    `<div class="plan-tiptext">${todayCount>=portions?"Today's portion complete — māshāʾAllāh 🌙":"Tap each part as you finish it. Reading from your own mushaf? Just check them off here."}</div>`+
+    planFooterHTML();
+  body.querySelectorAll(".plan-row").forEach(b=>b.onclick=()=>togglePlanPortion(+b.dataset.i,portions));
+  wirePlanFooter();
 }
 
 /* ---- Search the Qur'ān ---- */
@@ -2419,6 +2610,8 @@ $("recUndo").addEventListener("click",recUndo);
 $("kahfClose").addEventListener("click",closeKahf);
 $("searchBtn").addEventListener("click",openSearch);
 $("findBtn").addEventListener("click",openSearch);
+$("planBtn").addEventListener("click",openPlan);
+$("planClose").addEventListener("click",closePlan);
 $("searchClose").addEventListener("click",closeSearch);
 window.addEventListener("resize",()=>{ if(document.body.classList.contains("rec-view"))renderTree(); });
 $("srchGo").addEventListener("click",runSearch);
@@ -2428,7 +2621,13 @@ $("srchInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDef
 $("srchSug").addEventListener("click",e=>{ const b=e.target.closest("[data-sug]"); if(b)pickSuggest(+b.dataset.sug); });
 $("srchBody").addEventListener("click",e=>{ const go=e.target.closest("[data-g]"); if(go){ startFrom(+go.dataset.g); return; } const op=e.target.closest("[data-open]"); if(op){ openResult(+op.dataset.open, op); } });
 $("recTransOn").checked=recTrans;
-$("recTransOn").addEventListener("change",e=>{ recTrans=e.target.checked; store.set("rec_trans",recTrans); if(batchItems.length)paintBatch(); toast(recTrans?"Translation shown":"Translation hidden"); });
+$("recTransOn").addEventListener("change",e=>{ recTrans=e.target.checked; store.set("rec_trans",recTrans); if(recStyle==="book"){recStyle="cards";store.set("rec_style","cards");} updateStyleSeg(); if(batchItems.length)paintBatch(); toast(recTrans?"Translation shown":"Translation hidden"); });
+$("recStyleSeg").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>setRecStyle(b.dataset.style)));
+updateStyleSeg();
+$("readRemindOn").checked=readRemindOn;
+$("readRemindTime").value=readRemindTime;
+$("readRemindOn").addEventListener("change",e=>toggleReadRemind(e.target.checked));
+$("readRemindTime").addEventListener("change",e=>{ readRemindTime=e.target.value||"20:00"; store.set("read_remind_time",readRemindTime); writeReadRemind(); toast("Reminder time set to "+readRemindTime); });
 $("recPerDayInput").value=recPerDay;
 $("recPerDayInput").addEventListener("change",e=>{ let v=Math.max(1,Math.min(20,parseInt(e.target.value,10)||3)); recPerDay=v; e.target.value=v; store.set("rec_perday",v); renderRecite(); });
 window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
@@ -2443,10 +2642,10 @@ renderDua();
 renderFab();
 renderMascot();
 show(location.hash.slice(1)||"recite");
-updateKahfRemind();
+updateKahfRemind(); writeReadRemind();
 refreshWeather(false);
 setInterval(()=>refreshWeather(false), 20*60*1000);
-setInterval(()=>{ const [,,d]=ymdIn(P.tz,new Date()); if(d!==build.day){ build.day=d; build(); renderVerse(); renderMascot(); renderRamadan(); renderSpecial(); updateKahfRemind(); if(document.getElementById("view-azkar").classList.contains("active"))renderAzkar(); } applyTheme(); if(new Date().getSeconds()%20===0) renderSky(); kahfRemindTick(); tick(false); },1000);
+setInterval(()=>{ const [,,d]=ymdIn(P.tz,new Date()); if(d!==build.day){ build.day=d; build(); renderVerse(); renderMascot(); renderRamadan(); renderSpecial(); updateKahfRemind(); if(document.getElementById("view-azkar").classList.contains("active"))renderAzkar(); } applyTheme(); if(new Date().getSeconds()%20===0) renderSky(); kahfRemindTick(); readRemindTick(); tick(false); },1000);
 build.day=ymdIn(P.tz,new Date())[2];
 })();
 </script>
