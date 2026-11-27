@@ -377,10 +377,13 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
 .rt-barm i{display:block;height:100%;width:0;background:var(--brass);border-radius:999px;transition:width .3s ease}
 .rec-motiv{font-size:13px;line-height:1.55;color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface);background:linear-gradient(100deg,color-mix(in srgb,var(--band) 16%,var(--surface)),var(--surface))}
 .rec-motiv b{font-weight:600}
-.tree-card{margin-top:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);background:linear-gradient(180deg,color-mix(in srgb,var(--band) 9%,var(--surface)),var(--surface));padding:12px 10px 10px;display:grid;gap:4px;justify-items:center}
-.tree-wrap{width:100%;max-width:300px}
-.tree-wrap svg{display:block;width:100%;height:auto}
-.tree-cap{font-size:13px;color:var(--muted);text-align:center;font-weight:500}
+#treeSide{position:fixed;left:max(0px,calc(50% - 320px));top:calc(env(safe-area-inset-top,0px));bottom:calc(60px + env(safe-area-inset-bottom,0px));width:46px;z-index:3;pointer-events:none;display:none;overflow:visible}
+#treeSide svg{width:100%;height:100%;display:block;overflow:visible}
+body.rec-view #treeSide{display:block}
+body.rec-view #view-recite{padding-left:44px}
+@media (max-width:380px){#treeSide{width:38px}body.rec-view #view-recite{padding-left:36px}}
+.find-btn{margin-top:12px;width:100%;border:1px dashed var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.find-btn:active{background:color-mix(in srgb,var(--band) 10%,var(--surface))}
 .srch-bar{display:flex;gap:8px;padding:12px 16px 4px;max-width:680px;margin:0 auto;width:100%}
 .srch-bar input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:11px;padding:11px 13px;font-size:15px;font-family:inherit}
 .srch-bar input:focus{outline:none;border-color:var(--band)}
@@ -573,10 +576,7 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
         </div>
         <div class="rec-motiv" id="recMotiv"></div>
       </div>
-      <div class="tree-card" id="treeCard">
-        <div class="tree-wrap"><svg id="treeSvg" viewBox="0 0 220 200" preserveAspectRatio="xMidYMax meet" aria-hidden="true"></svg></div>
-        <div class="tree-cap" id="treeCap"></div>
-      </div>
+      <button class="find-btn" id="findBtn">🔍 Search &amp; read any sūrah or āyah</button>
       <div class="rec-list" id="recList"></div>
       <div class="rec-actions">
         <button class="btn-brass" id="recMark">✓ Mark as read</button>
@@ -697,7 +697,7 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
           <li><b>Delivered by:</b> the AlQuran Cloud API (alquran.cloud).</li>
         </ul>
       </div>
-      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 45</p>
+      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 46</p>
     </details>
   </section>
 
@@ -910,6 +910,8 @@ body[data-view="recite"] .frontsun.show,body[data-view="prayer"] .frontsun.show{
   <div class="mp-verse"><div class="ar" id="mpVerseAr" lang="ar"></div><div class="tr" id="mpVerseTr"></div><div class="ref" id="mpVerseRef"></div></div>
   <button class="mp-close" id="mpClose">Close</button>
 </div>
+
+<div id="treeSide" aria-hidden="true"><svg id="treeSvg" preserveAspectRatio="none"></svg></div>
 
 <div class="kahf" id="kahfModal" hidden>
   <div class="kahf-head">
@@ -1980,44 +1982,43 @@ function surahFirstGlobal(n){ let c=0; for(let i=0;i<n-1;i++)c+=SURAH_AYAHS[i]; 
 function tFlower(x,y,r,col){ let p=`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})">`; for(let a=0;a<5;a++){ const ang=a*72*Math.PI/180; p+=`<circle cx="${(Math.cos(ang)*r).toFixed(1)}" cy="${(Math.sin(ang)*r).toFixed(1)}" r="${(r*0.6).toFixed(1)}" fill="${col}"/>`; } return p+`<circle r="${(r*0.5).toFixed(1)}" fill="#f5b53a"/></g>`; }
 function tGrapes(x,y){ const c="#7b4ea6",c2="#5f3a88"; let p=`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><path d="M0 -2 l0 -5" stroke="#4a7a3a" stroke-width="1.4"/>`; const rows=[[0],[-3.2,3.2],[-5,0,5],[-3.2,3.2],[0]]; let yy=0; rows.forEach((row,ri)=>{ row.forEach(dx=>{ p+=`<circle cx="${dx}" cy="${yy}" r="3" fill="${ri%2?c2:c}"/>`; }); yy+=4.5; }); return p+"</g>"; }
 function tSpark(x,y){ return `<path d="M${x} ${y-5} L${x+1.4} ${y-1.4} L${x+5} ${y} L${x+1.4} ${y+1.4} L${x} ${y+5} L${x-1.4} ${y+1.4} L${x-5} ${y} L${x-1.4} ${y-1.4} Z"/>`; }
+let recLastPct=0;
 function renderTree(pct){
-  const svg=$("treeSvg"), cap=$("treeCap"); if(!svg)return;
-  const g=Math.max(0,Math.min(1,(pct||0)/100)), groundY=186, cx=110; const P=[];
-  P.push(`<ellipse cx="${cx}" cy="${groundY+5}" rx="88" ry="12" fill="rgba(120,155,110,.16)"/>`);
-  P.push(`<rect x="22" y="${groundY}" width="176" height="3" rx="1.5" fill="rgba(120,150,110,.33)"/>`);
-  if(g<0.06){
-    const h=16+(g/0.06)*16, topY=groundY-h;
-    P.push(`<path d="M${cx} ${groundY} Q ${cx-2} ${topY+8} ${cx} ${topY}" stroke="#4a7a3a" stroke-width="4" fill="none" stroke-linecap="round"/>`);
-    P.push(`<path d="M${cx} ${topY+5} q -17 -11 -23 2 q 15 7 23 -2Z" fill="#53b67e"/>`);
-    P.push(`<path d="M${cx} ${topY+1} q 17 -11 23 2 q -15 7 -23 -2Z" fill="#3f9f68"/>`);
-  } else {
-    const th=24+120*Math.min(1,g*1.08), topY=groundY-th, bw=5+5*g, midY=(groundY+topY)/2;
-    P.push(`<path d="M${cx-bw} ${groundY} Q ${cx-bw*0.6} ${midY} ${cx-2} ${topY} L ${cx+2} ${topY} Q ${cx+bw*0.6} ${midY} ${cx+bw} ${groundY} Z" fill="#7a4a24"/>`);
-    if(g>0.32){ const bl=16+40*g, bwd=2.6+2*g;
-      P.push(`<path d="M${cx} ${topY+42} q -${(bl*0.6).toFixed(0)} -6 -${bl.toFixed(0)} -24" stroke="#7a4a24" stroke-width="${bwd.toFixed(1)}" fill="none" stroke-linecap="round"/>`);
-      P.push(`<path d="M${cx} ${topY+60} q ${(bl*0.6).toFixed(0)} -4 ${bl.toFixed(0)} -22" stroke="#7a4a24" stroke-width="${bwd.toFixed(1)}" fill="none" stroke-linecap="round"/>`);
-    }
-    const R=18+66*g, ccy=topY-R*0.18;
-    const blobs=[[0,0,1],[-0.62,0.12,0.72],[0.62,0.14,0.72],[-0.34,-0.5,0.64],[0.36,-0.46,0.64],[0,0.44,0.7],[-0.15,-0.2,0.55]];
-    let canopy="";
-    blobs.forEach((b,i)=>{ const thr=(i/blobs.length)*0.55, lg=Math.max(0,Math.min(1,(g-thr)/(1-thr))); if(lg<=0)return; const r=R*b[2]*(0.45+0.55*lg), x=cx+b[0]*R*0.82, y=ccy+b[1]*R*0.82, col=i%2?"#2f8f5b":"#3fa368"; canopy+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${col}"/>`; });
-    P.push(`<g>${canopy}</g>`);
-    const fo=Math.max(0,Math.min(1,(g-0.58)/0.28));
-    if(fo>0){ const seed=[[-0.4,-0.2],[0.3,-0.35],[-0.1,0.25],[0.45,0.05],[-0.55,0.15],[0.12,-0.08],[-0.25,-0.45],[0.5,-0.22]]; let fl=""; const n=Math.round(seed.length*fo); for(let i=0;i<n;i++){ const s=seed[i]; fl+=tFlower(cx+s[0]*R*0.78, ccy+s[1]*R*0.78, 3.6+1.4*fo, i%2?"#ffd9e6":"#fff3c4"); } P.push(`<g opacity="${fo.toFixed(2)}">${fl}</g>`); }
-    const go=Math.max(0,Math.min(1,(g-0.9)/0.1));
-    if(go>0){ const spots=[[-0.5,0.32],[0.44,0.36],[0,0.52],[-0.24,0.46],[0.26,0.22]]; let gr=""; const n=Math.max(1,Math.round(spots.length*go)); for(let i=0;i<n;i++){ const s=spots[i]; gr+=tGrapes(cx+s[0]*R*0.72, ccy+s[1]*R*0.82); } P.push(`<g opacity="${go.toFixed(2)}">${gr}</g>`); }
-    if(g>=1) P.push(`<g fill="#ffe29a">${tSpark(cx-72,topY+6)}${tSpark(cx+74,topY+26)}${tSpark(cx+6,ccy-R)}</g>`);
+  if(typeof pct==="number")recLastPct=pct;
+  const svg=$("treeSvg"), host=$("treeSide"); if(!svg||!host)return;
+  const W=host.clientWidth||44, H=host.clientHeight||0; if(H<40)return;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const g=Math.max(0,Math.min(1,(recLastPct||0)/100));
+  const cx=W*0.5, baseY=H-2, maxH=H-26, trunkH=Math.max(10, maxH*(g<0.05?(g/0.05)*0.06:g)), topY=baseY-trunkH;
+  const sway=Math.min(7,W*0.16), P=[];
+  P.push(`<ellipse cx="${cx}" cy="${baseY}" rx="${(W*0.42).toFixed(1)}" ry="4" fill="rgba(120,155,110,.25)"/>`);
+  if(g<0.05){
+    const ty=baseY-(10+(g/0.05)*14);
+    P.push(`<path d="M${cx} ${baseY} Q ${cx-2} ${ty+6} ${cx} ${ty}" stroke="#4a7a3a" stroke-width="3" fill="none" stroke-linecap="round"/>`);
+    P.push(`<ellipse cx="${cx-6}" cy="${ty+2}" rx="7" ry="3.4" fill="#53b67e" transform="rotate(-24 ${cx-6} ${ty+2})"/>`);
+    P.push(`<ellipse cx="${cx+6}" cy="${ty-2}" rx="7" ry="3.4" fill="#3f9f68" transform="rotate(24 ${cx+6} ${ty-2})"/>`);
+    svg.innerHTML=P.join(""); return;
   }
+  const trunkX=y=>{ const t=(baseY-y)/Math.max(1,trunkH); return cx+Math.sin(t*Math.PI*1.1)*sway*(1-t*0.3); };
+  const tw=2.4+2.6*g;
+  P.push(`<path d="M${cx} ${baseY} Q ${(cx+sway).toFixed(1)} ${(baseY-trunkH*0.33).toFixed(1)} ${cx} ${(baseY-trunkH*0.5).toFixed(1)} Q ${(cx-sway).toFixed(1)} ${(baseY-trunkH*0.66).toFixed(1)} ${cx} ${topY.toFixed(1)}" stroke="#6e4422" stroke-width="${tw.toFixed(1)}" fill="none" stroke-linecap="round"/>`);
+  const step=Math.max(26,H/14), nodes=Math.floor(trunkH/step);
+  for(let i=1;i<=nodes;i++){
+    const y=baseY-i*step; if(y<topY+8)break;
+    const side=i%2?1:-1, x=trunkX(y), bl=(W*0.30)*(0.6+0.4*g), ex=x+side*bl, ey=y-5, lr=3.2+2.2*g;
+    P.push(`<path d="M${x.toFixed(1)} ${y.toFixed(1)} Q ${(x+side*bl*0.5).toFixed(1)} ${(y-3).toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}" stroke="#6e4422" stroke-width="1.5" fill="none"/>`);
+    P.push(`<ellipse cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" rx="${(lr*1.5).toFixed(1)}" ry="${lr.toFixed(1)}" fill="${i%2?'#2f8f5b':'#3fa368'}" transform="rotate(${side*28} ${ex.toFixed(1)} ${ey.toFixed(1)})"/>`);
+    P.push(`<circle cx="${(x+side*bl*0.55).toFixed(1)}" cy="${(y-2).toFixed(1)}" r="${(lr*0.8).toFixed(1)}" fill="#53b67e"/>`);
+    if(g>0.55&&i>nodes-4){ const fo=Math.min(1,(g-0.55)/0.3); P.push(`<g opacity="${fo.toFixed(2)}">${tFlower(ex,ey-3,2.4+1.2*fo,i%2?'#ffd9e6':'#fff3c4')}</g>`); }
+  }
+  const cr=6+W*0.5*g;
+  const crownBlobs=[[0,0,1],[-0.6,0.2,0.66],[0.6,0.2,0.66],[0,-0.5,0.7],[-0.35,-0.15,0.6],[0.35,-0.15,0.6]];
+  let crown=""; crownBlobs.forEach((b,i)=>{ crown+=`<circle cx="${(cx+b[0]*cr).toFixed(1)}" cy="${(topY+b[1]*cr-cr*0.2).toFixed(1)}" r="${(cr*b[2]).toFixed(1)}" fill="${i%2?'#2f8f5b':'#3fa368'}"/>`; });
+  P.push(`<g>${crown}</g>`);
+  if(g>0.55){ const fo=Math.min(1,(g-0.55)/0.3), fs=[[-0.42,-0.2],[0.32,-0.4],[0.12,0.22],[-0.2,0.36]]; let fl=""; const n=Math.round(fs.length*fo); for(let i=0;i<n;i++){const s=fs[i]; fl+=tFlower(cx+s[0]*cr, topY-cr*0.2+s[1]*cr, 2.4+1.2*fo, i%2?'#ffd9e6':'#fff3c4');} P.push(`<g opacity="${fo.toFixed(2)}">${fl}</g>`); }
+  if(g>0.9){ const go=Math.min(1,(g-0.9)/0.1), gs=[[-0.45,0.32],[0.42,0.36],[0,0.56]]; let gr=""; const n=Math.max(1,Math.round(gs.length*go)); for(let i=0;i<n;i++){const s=gs[i]; gr+=`<g transform="translate(${(cx+s[0]*cr).toFixed(1)} ${(topY-cr*0.2+s[1]*cr).toFixed(1)}) scale(0.8)">${tGrapes(0,0)}</g>`;} P.push(`<g opacity="${go.toFixed(2)}">${gr}</g>`); }
+  if(g>=1) P.push(`<g fill="#ffe29a">${tSpark(cx+cr*0.9,topY)}${tSpark(cx-cr*0.9,topY+cr*0.4)}</g>`);
   svg.innerHTML=P.join("");
-  let c;
-  if(pct<=0)c="Plant your Qur'ān tree — start reading 🌱";
-  else if(pct<25)c="A seedling has sprouted 🌱";
-  else if(pct<50)c="Your tree is growing 🌿";
-  else if(pct<75)c="Branches are spreading 🌳";
-  else if(pct<95)c="Blossoms are opening 🌸";
-  else if(pct<100)c="Almost in full fruit… 🍇";
-  else c="Māshāʾ Allāh — full bloom and fruit! 🍇🌸";
-  if(cap)cap.textContent=c;
 }
 function updateRecDash(done,pct){
   const dash=$("recDash"); if(!dash)return; dash.hidden=false;
@@ -2368,7 +2369,8 @@ function show(v){
   try{ document.body.dataset.view=v; }catch(_){ }
   document.querySelectorAll(".view").forEach(s=>s.classList.toggle("active",s.id==="view-"+v));
   for(const [name,btn] of Object.entries(VIEWS)) $(btn).setAttribute("aria-current",String(name===v));
-  if(v==="recite"){ renderRecite(); renderRamadan(); renderSpecial(); } if(v==="azkar")renderAzkar(); if(v==="tasbih"){ renderTasbih(); renderDua(); } if(v==="qibla")renderQibla(); if(v==="duas")renderDuas();
+  try{ document.body.classList.toggle("rec-view",v==="recite"); }catch(_){}
+  if(v==="recite"){ renderRecite(); renderRamadan(); renderSpecial(); requestAnimationFrame(()=>renderTree()); } if(v==="azkar")renderAzkar(); if(v==="tasbih"){ renderTasbih(); renderDua(); } if(v==="qibla")renderQibla(); if(v==="duas")renderDuas();
   if(location.hash.slice(1)!==v){ try{history.replaceState(null,"","#"+v)}catch(_){ location.hash=v; } }
 }
 $("navRecite").onclick=()=>show("recite"); $("navPrayer").onclick=()=>show("prayer"); $("navQibla").onclick=()=>show("qibla"); $("navAzkar").onclick=()=>show("azkar"); $("navTasbih").onclick=()=>show("tasbih"); $("navDuas").onclick=()=>show("duas"); $("navLearn").onclick=()=>show("learn");
@@ -2376,7 +2378,9 @@ $("recMark").addEventListener("click",recMarkRead);
 $("recUndo").addEventListener("click",recUndo);
 $("kahfClose").addEventListener("click",closeKahf);
 $("searchBtn").addEventListener("click",openSearch);
+$("findBtn").addEventListener("click",openSearch);
 $("searchClose").addEventListener("click",closeSearch);
+window.addEventListener("resize",()=>{ if(document.body.classList.contains("rec-view"))renderTree(); });
 $("srchGo").addEventListener("click",runSearch);
 $("srchInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); runSearch(); } });
 $("srchBody").addEventListener("click",e=>{ const go=e.target.closest("[data-g]"); if(go){ startFrom(+go.dataset.g); return; } const op=e.target.closest("[data-open]"); if(op){ openResult(+op.dataset.open, op); } });
