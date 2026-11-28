@@ -440,6 +440,13 @@ body.rec-view #treeSide{display:block}
 .plan-done{font-size:16px;line-height:1.5;color:var(--ink);text-align:center;padding:10px}
 .plan-foot{display:flex;gap:10px;margin-top:4px}
 .plan-foot button{flex:1;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px;font-size:13px;cursor:pointer;font-family:inherit}
+.pr-ctrl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:2px}
+.pr-ctrl .pr-style{margin:0;flex:1 1 150px}
+.pr-tog{display:flex;gap:6px;flex:1 1 180px}
+.pr-tog button{flex:1;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:8px 6px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.pr-tog button.on{background:var(--band);color:var(--band-ink);border-color:var(--band)}
+.pr-bism{font-family:var(--f-ar);font-size:24px;text-align:center;direction:rtl;color:var(--ink);padding:10px 0 8px;border-bottom:1px dashed var(--line);margin:6px 0 10px}
+.pr-tr{font-size:13px;color:var(--brass);font-style:italic;line-height:1.55;direction:ltr}
 .qw{cursor:pointer;border-radius:5px;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .qw.qw-lit{background:color-mix(in srgb,var(--brass) 28%,transparent)}
 #letterPop{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.5);display:grid;place-items:end center}
@@ -797,7 +804,7 @@ body.rec-view #treeSide{display:block}
           <li>If you ever spot a difference, it's worth reporting to Tanzil/QuranComplex; please also let me know and I'll look into it.</li>
         </ul>
       </div>
-      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 58</p>
+      <p class="note" style="opacity:.55;text-align:center">Daily Reminder · Build 59</p>
     </details>
   </section>
 
@@ -2105,6 +2112,7 @@ let recPrev=store.get("rec_prev",null); // position before the last "mark read",
 let recPartial=store.get("rec_partial",null); // {start, read:[...]} — per-āyah marks not yet completed, survives refresh
 let recTrans=store.get("rec_trans",true); // show translation in recitation
 let recStyle=store.get("rec_style","cards"); // "cards" (separate āyāt) or "book" (continuous)
+let recTranslit=store.get("rec_translit",false); // show Latin pronunciation line
 // Progress counts EVERY āyah marked read (including partial ones in the current batch).
 function updateRecProg(){
   const done=Math.min(QURAN_TOTAL, recPos + (recPos<QURAN_TOTAL ? batchRead.size : 0));
@@ -2224,16 +2232,23 @@ function setRecStyle(mode){
 function paintBatch(){
   const list=$("recList"); if(!list)return;
   if(recStyle==="book"){
-    list.innerHTML=`<div class="rec-book" dir="rtl" lang="ar">`+
-      batchItems.map((o,i)=>{ const g=batchStart+i, read=batchRead.has(g);
-        return `<span class="rb-ayah${read?' read':''}" data-g="${g}">${qwrap(o.ar)}<span class="rb-num">${toArabicNum(o.ni)}</span> </span>`;
-      }).join("")+`</div><div class="rec-booktip">Tap an āyah to mark it read · long-press a word to read it letter by letter 🔤</div>`;
+    let lastS=null, inner="";
+    batchItems.forEach((o,i)=>{ const g=batchStart+i, read=batchRead.has(g);
+      if(needsBism(o)&&o.sn!==lastS) inner+=`</div><div class="pr-bism" lang="ar" dir="rtl">${qwrap(BISM)}</div><div class="rec-book" dir="rtl" lang="ar">`;
+      lastS=o.sn; const ar=needsBism(o)?kahfStrip(o.ar):o.ar;
+      inner+=`<span class="rb-ayah${read?' read':''}" data-g="${g}">${qwrap(ar)}<span class="rb-num">${toArabicNum(o.ni)}</span> </span>`;
+    });
+    list.innerHTML=`<div class="rec-book" dir="rtl" lang="ar">`+inner+`</div><div class="rec-booktip">Tap an āyah to mark it read · long-press a word to read it letter by letter 🔤</div>`;
     list.querySelectorAll(".rb-ayah").forEach(s=>s.onclick=()=>markAyahRead(+s.dataset.g));
   } else {
-    list.innerHTML=batchItems.map((o,i)=>{ const g=batchStart+i, read=batchRead.has(g);
+    let lastS=null, inner="";
+    batchItems.forEach((o,i)=>{ const g=batchStart+i, read=batchRead.has(g);
+      if(needsBism(o)&&o.sn!==lastS) inner+=`<div class="pr-bism" lang="ar" dir="rtl">${qwrap(BISM)}</div>`;
+      lastS=o.sn; const ar=needsBism(o)?kahfStrip(o.ar):o.ar;
       const trans = recTrans ? `${o.dv?`<div class="dv" lang="dv" dir="rtl">${o.dv}</div>`:""}<div class="mn">${o.en}</div>` : "";
-      return `<div class="rec-ayah${read?' read':''}"><div class="rec-ref">${o.s} · ${o.sn}:${o.ni}</div><div class="ar" lang="ar" dir="rtl">${qwrap(o.ar)}</div>${trans}<button class="rec-read" data-g="${g}">${read?"✓ Read":"Mark read"}</button></div>`;
-    }).join("")+`<div class="rec-booktip">🔤 Can't read a word? Tap it to see the letters.</div>`;
+      inner+=`<div class="rec-ayah${read?' read':''}"><div class="rec-ref">${o.s} · ${o.sn}:${o.ni}</div><div class="ar" lang="ar" dir="rtl">${qwrap(ar)}</div>${trans}<button class="rec-read" data-g="${g}">${read?"✓ Read":"Mark read"}</button></div>`;
+    });
+    list.innerHTML=inner+`<div class="rec-booktip">🔤 Can't read a word? Tap it to see the letters.</div>`;
     list.querySelectorAll(".rec-read").forEach(b=>b.onclick=()=>markAyahRead(+b.dataset.g));
   }
   updateStyleSeg();
@@ -2526,32 +2541,70 @@ function setPlanPortion(i,portions,val){
 }
 // Fetch a global āyah range (ps..pe), one request per sūrah it spans
 async function fetchRange(ps,pe){
-  const dvEd=await getDvEdition(), eds="quran-uthmani,en.sahih"+(dvEd?","+dvEd:""), out=[]; let g=ps;
+  const dvEd=await getDvEdition(), eds="quran-uthmani,en.sahih,en.transliteration"+(dvEd?","+dvEd:""), out=[]; let g=ps;
   while(g<=pe){
     const info=surahInfoFor(g), sn=info.surah, startG=info.endGlobal-info.len+1;
     const fromNi=g-startG+1, toG=Math.min(pe,info.endGlobal), toNi=toG-startG+1;
     const r=await fetch(`https://api.alquran.cloud/v1/surah/${sn}/editions/${eds}`,{cache:"force-cache"});
     if(!r.ok)throw new Error("net"); const j=await r.json(), d=(j&&j.data)||[];
-    const aA=d[0].ayahs, eA=d[1]?d[1].ayahs:[], dA=(dvEd&&d[2])?d[2].ayahs:null, nm=d[0].englishName;
-    for(let ni=fromNi; ni<=toNi; ni++){ const a=aA[ni-1]; if(!a)continue; const e=eA[ni-1], dvt=dA?dA[ni-1]:null;
-      out.push({g:startG+ni-1, ar:a.text, en:e?e.text:"", dv:(dvt&&isThaana(dvt.text))?dvt.text:null, s:nm, sn, ni}); }
+    const aA=d[0].ayahs, eA=d[1]?d[1].ayahs:[], trA=d[2]?d[2].ayahs:[], dA=(dvEd&&d[3])?d[3].ayahs:null, nm=d[0].englishName;
+    for(let ni=fromNi; ni<=toNi; ni++){ const a=aA[ni-1]; if(!a)continue; const e=eA[ni-1], trt=trA[ni-1], dvt=dA?dA[ni-1]:null;
+      out.push({g:startG+ni-1, ar:a.text, en:e?e.text:"", tr:trt?trt.text:"", dv:(dvt&&isThaana(dvt.text))?dvt.text:null, s:nm, sn, ni}); }
     g=toG+1;
   }
   return out;
 }
+function needsBism(o){ return o.ni===1 && o.sn!==1 && o.sn!==9; }
+const BISM="بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
+let _prItems=[], _prCtx=null;
+function prKey(){ return "plan_read_"+dayKeyNow()+"_"+(_prCtx?_prCtx.i:0); }
+function prUpto(){ return Math.max(0,Math.min(_prItems.length, store.get(prKey(),0)|0)); }
+function prSetUpto(n){ n=Math.max(0,Math.min(_prItems.length,n)); store.set(prKey(),n);
+  if(n>=_prItems.length && _prItems.length) setPlanPortion(_prCtx.i,_prCtx.portions,true);
+  renderPrBody();
+}
 async function openPlanReader(ps,pe,i,portions,label){
   const m=$("planReaderModal"), body=$("prBody"); if(!m||!body)return;
   m.hidden=false; try{document.body.style.overflow="hidden";}catch(e){}
-  $("prTitle").textContent=label; $("prSub").textContent="Loading…"; body.innerHTML=`<div class="kahf-load">Loading the Qur'ān…</div>`;
-  try{
-    const items=await fetchRange(ps,pe); const f=items[0], l=items[items.length-1];
-    $("prSub").textContent=`${portionLabel(ps,pe)} · ${items.length} āyāt`;
-    body.innerHTML=items.map(o=>{ const trans=recTrans?`${o.dv?`<div class="dv" lang="dv" dir="rtl">${o.dv}</div>`:""}<div class="mn">${o.en}</div>`:"";
-      return `<div class="kahf-ayah"><span class="num">${o.sn}:${o.ni}</span><div class="ar" lang="ar" dir="rtl">${qwrap(o.ar)}</div>${trans}</div>`; }).join("")+
-      `<button class="plan-start" id="prDone" style="width:100%;margin-top:6px">✓ I've read this portion</button>`;
-    body.scrollTop=0;
-    $("prDone").onclick=()=>{ setPlanPortion(i,portions,true); closePlanReader(); };
-  }catch(e){ $("prSub").textContent=""; body.innerHTML=`<div class="kahf-err">Couldn't load the Qur'ān — connect to the internet and try again.</div>`; }
+  _prCtx={i,portions,ps,pe,label}; $("prTitle").textContent=label; $("prSub").textContent="Loading…"; body.innerHTML=`<div class="kahf-load">Loading the Qur'ān…</div>`;
+  try{ _prItems=await fetchRange(ps,pe); $("prSub").textContent=`${portionLabel(ps,pe)} · ${_prItems.length} āyāt`; renderPrBody(); body.scrollTop=0; }
+  catch(e){ $("prSub").textContent=""; body.innerHTML=`<div class="kahf-err">Couldn't load the Qur'ān — connect to the internet and try again.</div>`; }
+}
+function prControls(){
+  return `<div class="pr-ctrl">`+
+    `<div class="rec-style pr-style"><button data-ps="cards" class="${recStyle!=='book'?'on':''}">Āyāt</button><button data-ps="book" class="${recStyle==='book'?'on':''}">Book</button></div>`+
+    `<div class="pr-tog"><button data-pt="trans" class="${recTrans?'on':''}">Meaning</button><button data-pt="translit" class="${recTranslit?'on':''}">Pronunciation</button></div>`+
+  `</div>`;
+}
+function renderPrBody(){
+  const body=$("prBody"); if(!body)return;
+  const upto=prUpto(), total=_prItems.length, pct=total?Math.round(upto/total*100):0;
+  let html=prControls()+`<div class="kahf-prog"><div class="kahf-prog-bar"><i style="width:${pct}%"></i></div><span class="kahf-prog-t">${upto} / ${total} read</span></div>`;
+  let lastS=null;
+  if(recStyle==="book"){
+    html+=`<div class="rec-book" dir="rtl" lang="ar">`;
+    _prItems.forEach((o,idx)=>{
+      if(needsBism(o)&&o.sn!==lastS){ html+=`</div><div class="pr-bism" lang="ar" dir="rtl">${qwrap(BISM)}</div><div class="rec-book" dir="rtl" lang="ar">`; }
+      lastS=o.sn; const ar=needsBism(o)?kahfStrip(o.ar):o.ar, read=idx<upto;
+      html+=`<span class="rb-ayah${read?' read':''}" data-k="${idx+1}">${qwrap(ar)}<span class="rb-num" data-k="${idx+1}">${toArabicNum(o.ni)}</span> </span>`;
+    });
+    html+=`</div><div class="rec-booktip">Tap an āyah number to mark read up to there · tap a word for its letters</div>`;
+  } else {
+    _prItems.forEach((o,idx)=>{
+      if(needsBism(o)&&o.sn!==lastS) html+=`<div class="pr-bism" lang="ar" dir="rtl">${qwrap(BISM)}</div>`;
+      lastS=o.sn; const ar=needsBism(o)?kahfStrip(o.ar):o.ar, read=idx<upto;
+      const translit=recTranslit&&o.tr?`<div class="pr-tr">${esc(o.tr)}</div>`:"";
+      const trans=recTrans?`${o.dv?`<div class="dv" lang="dv" dir="rtl">${o.dv}</div>`:""}<div class="mn">${esc(o.en)}</div>`:"";
+      html+=`<div class="kahf-ayah${read?' read':''}"><span class="num">${o.sn}:${o.ni}</span><div class="ar" lang="ar" dir="rtl">${qwrap(ar)}</div>${translit}${trans}<button class="kahf-read" data-k="${idx+1}">${read?"✓ Read":"Read to here"}</button></div>`;
+    });
+  }
+  html+=`<button class="plan-start" id="prDone" style="width:100%;margin-top:8px">✓ I've read this portion</button>`;
+  body.innerHTML=html;
+  body.querySelectorAll(".pr-style button").forEach(b=>b.onclick=()=>{ recStyle=b.dataset.ps; store.set("rec_style",recStyle); updateStyleSeg(); renderPrBody(); });
+  body.querySelectorAll(".pr-tog button").forEach(b=>b.onclick=()=>{ const t=b.dataset.pt; if(t==="trans"){ recTrans=!recTrans; store.set("rec_trans",recTrans); const cb=$("recTransOn"); if(cb)cb.checked=recTrans; } else { recTranslit=!recTranslit; store.set("rec_translit",recTranslit); } renderPrBody(); });
+  body.querySelectorAll(".kahf-read").forEach(btn=>btn.onclick=()=>{ const k=+btn.dataset.k; prSetUpto(k===prUpto()?k-1:k); });
+  body.querySelectorAll(".rb-num").forEach(nel=>nel.onclick=ev=>{ ev.stopPropagation(); const k=+nel.dataset.k; prSetUpto(k===prUpto()?k-1:k); });
+  const done=$("prDone"); if(done)done.onclick=()=>{ setPlanPortion(_prCtx.i,_prCtx.portions,true); closePlanReader(); };
 }
 function closePlanReader(){ const m=$("planReaderModal"); if(m)m.hidden=true; try{document.body.style.overflow="hidden";}catch(e){} }
 function renderPlan(){
